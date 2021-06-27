@@ -28,15 +28,15 @@ app = FastAPI()
 slug_allowed_characters = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 
-class invalidslugerror(Exception):
+class InvalidSlugError(Exception):
     pass
 
 
-class slugdosentexistserror(Exception):
+class SlugDosentExistsError(Exception):
     pass
 
 
-class slugalreadyexistserror(Exception):
+class SlugAlreadyExistsError(Exception):
     pass
 
 
@@ -63,11 +63,11 @@ async def add_link(url: str, host, slug: Optional[str] = None):
     theslug = slug or await gen_calid_url_slug()
     for i in theslug:
         if not (i.isalpha()) and not (i.isdigit()):
-            raise invalidslugerror(
+            raise InvalidSlugError(
                 f"invalid slug: {theslug}\nthe slug must to be english letters or number or both"
             )
     if len(theslug) < 4 or len(theslug) > 20:
-        raise invalidslugerror(
+        raise InvalidSlugError(
             f"invalid slug: {theslug}\nthe slug length must to be 4-20"
         )
     else:
@@ -77,13 +77,13 @@ async def add_link(url: str, host, slug: Optional[str] = None):
             await links.create(slug=theslug, url=theurl, views=0)
             return {"slug": theslug, "url": theurl, "link": f"{host}/{theslug}"}
         else:
-            raise slugalreadyexistserror("the slug is already exists")
+            raise SlugAlreadyExistsError("the slug is already exists")
 
 
 async def get_link(slug: str, host):
     check_slug_exists = await link_exists(slug=slug)
     if not check_slug_exists:
-        raise slugdosentexistserror("the slug is not exists")
+        raise SlugDosentExistsError("the slug is not exists")
     else:
         check_link_db = await links.get(slug=slug)
         return {
@@ -99,7 +99,7 @@ async def get_link(slug: str, host):
 async def redirect_link(slug: str):
     check_slug_exists = await link_exists(slug=slug)
     if not check_slug_exists:
-        raise slugdosentexistserror("the slug is not exists")
+        raise SlugDosentExistsError("the slug is not exists")
     else:
         check_link_db = await links.get(slug=slug)
         theviews = int(check_link_db.views) + 1
