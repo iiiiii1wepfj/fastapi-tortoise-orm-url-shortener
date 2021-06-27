@@ -16,7 +16,7 @@ logger.add(
 )
 
 
-class links(Model):
+class Links(Model):
     slug = fields.CharField(max_length=20, pk=True)
     url = fields.TextField()
     views = fields.IntField()
@@ -41,7 +41,7 @@ class SlugAlreadyExistsError(Exception):
 
 
 async def link_exists(slug: str):
-    return await links.exists(slug=slug)
+    return await Links.exists(slug=slug)
 
 
 def gen_url_slug():
@@ -74,7 +74,7 @@ async def add_link(url: str, host, slug: Optional[str] = None):
         check_if_slug_exists = await link_exists(slug=slug)
         if not check_if_slug_exists:
             theurl = url if re.match(r"^https?://", url) else "http://" + url
-            await links.create(slug=theslug, url=theurl, views=0)
+            await Links.create(slug=theslug, url=theurl, views=0)
             return {"slug": theslug, "url": theurl, "link": f"{host}/{theslug}"}
         else:
             raise SlugAlreadyExistsError("the slug is already exists")
@@ -85,7 +85,7 @@ async def get_link(slug: str, host):
     if not check_slug_exists:
         raise SlugDosentExistsError("the slug is not exists")
     else:
-        check_link_db = await links.get(slug=slug)
+        check_link_db = await Links.get(slug=slug)
         return {
             "slug": check_link_db.slug,
             "url": check_link_db.url,
@@ -101,14 +101,14 @@ async def redirect_link(slug: str):
     if not check_slug_exists:
         raise SlugDosentExistsError("the slug is not exists")
     else:
-        check_link_db = await links.get(slug=slug)
+        check_link_db = await Links.get(slug=slug)
         theviews = int(check_link_db.views) + 1
-        await links.filter(slug=slug).update(views=theviews)
+        await Links.filter(slug=slug).update(views=theviews)
         return RedirectResponse(check_link_db.url)
 
 
 async def get_links_count():
-    return await links.all().count()
+    return await Links.all().count()
 
 
 @app.api_route("/add", methods=["POST", "GET"])
