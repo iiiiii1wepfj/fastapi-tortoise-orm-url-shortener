@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request, Form, APIRouter
+from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import HTTPException
@@ -25,7 +26,7 @@ class Links(Model):
     last_db_change_at = fields.DatetimeField(auto_now=True)
 
 
-app = FastAPI()
+app = FastAPI(docs_url=None, title="url shortener")
 slug_allowed_characters = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 
@@ -138,6 +139,11 @@ async def homepage_post(
         "results.html",
         context={"request": request, "type": "the url", "result": result},
     )
+
+
+@app.get("/docs", include_in_schema=False)
+async def the_docs_url_page_web_plugin_func_swagger():
+    return get_swagger_ui_html(openapi_url=app.openapi_url, title=app.title + " docs")
 
 
 @app.get("/get", include_in_schema=False)
