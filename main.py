@@ -60,7 +60,7 @@ async def gen_valid_url_slug():
 
 
 async def add_link(url: str, host, slug: Optional[str] = None):
-    theslug = slug or await gen_calid_url_slug()
+    theslug = slug or await gen_valid_url_slug()
     for i in theslug:
         if not (i.isalpha()) and not (i.isdigit()):
             raise InvalidSlugError(
