@@ -1,5 +1,6 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Form, APIRouter
 from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import HTTPException
 from tortoise import fields, Model
 from tortoise.contrib.fastapi import register_tortoise
@@ -111,21 +112,82 @@ async def get_links_count():
     return await Links.all().count()
 
 
-@app.api_route("/add", methods=["POST", "GET"])
+templates = Jinja2Templates(directory="templates")
+
+
+@app.get("/", include_in_schema=False)
+async def homepage(request: Request):
+    return templates.TemplateResponse("index.html", context={"request": request})
+
+
+@app.post("/", include_in_schema=False)
+async def homepage_post(
+    request: Request, url: str = Form(...), slug: Optional[str] = Form(None)
+):
+    thehost = request.headers["host"]
+    if slug:
+        theslug = slug.lower()
+    else:
+        theslug = None
+    try:
+        add_the_link = await add_link(url=url, slug=theslug, host=thehost)
+        result = add_the_link["link"]
+    except Exception as e:
+        result = e
+    return templates.TemplateResponse(
+        "results.html",
+        context={"request": request, "type": "the url", "result": result},
+    )
+
+
+@app.get("/get", include_in_schema=False)
+async def statspage(request: Request):
+    return templates.TemplateResponse("stats.html", context={"request": request})
+
+
+@app.post("/get", include_in_schema=False)
+async def statspage_post(request: Request, slug: str = Form(...)):
+    thehost = request.headers["host"]
+    if slug:
+        theslug = slug.lower()
+    else:
+        theslug = None
+    get_the_link = await get_link(slug=theslug, host=thehost)
+    try:
+        result = f"\nviews: {get_the_link['views']}, created at: {get_the_link['created_at']}, last time changed at: {get_the_link['last_change_at']}"
+    except Exception as e:
+        result = e
+    return templates.TemplateResponse(
+        "results.html",
+        context={
+            "request": request,
+            "type": f"the stats for the url {get_the_link['link']}",
+            "result": result,
+        },
+    )
+
+
+apirouter = APIRouter(prefix="/api")
+
+
+@apirouter.api_route("/add", methods=["POST", "GET"])
 async def add_short_url(url: str, request: Request, slug: Optional[str] = None):
     thehost = request.headers["host"]
-    theslug = slug.lower()
+    if slug:
+        theslug = slug.lower()
+    else:
+        theslug = None
     return await add_link(url=url, slug=theslug, host=thehost)
 
 
-@app.api_route("/get", methods=["POST", "GET"])
+@apirouter.api_route("/get", methods=["POST", "GET"])
 async def get_link_info(slug: str, request: Request):
     thehost = request.headers["host"]
     theslug = slug.lower()
     return await get_link(slug=theslug, host=thehost)
 
 
-@app.api_route("/all", methods=["POST", "GET"])
+@apirouter.api_route("/all", methods=["POST", "GET"])
 async def get_the_links_count():
     return {"count": await get_links_count()}
 
@@ -147,6 +209,7 @@ async def internal_server_error(request: Request, the_error: HTTPException):
     )
 
 
+app.include_router(apirouter)
 register_tortoise(
     app,
     db_url="sqlite://linksdb.sqlite",
