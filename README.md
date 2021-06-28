@@ -7,3 +7,6 @@ a url shortener with fastapi and tortoise-orm
 2. cd fastapi-tortoise-orm-url-shortener
 3. pip3 install -U -R requirements.txt
 4. python3 main.py
+
+# docs
+ after running the main.py file, in the endpoint /docs
