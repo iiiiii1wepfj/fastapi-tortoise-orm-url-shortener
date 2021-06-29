@@ -137,7 +137,7 @@ async def homepage_post(
         thetype = "the url"
     except Exception as e:
         result = e
-        thetype = type(e)
+        thetype = type(e).__name__
     return templates.TemplateResponse(
         "results.html",
         context={"request": request, "type": thetype, "result": result},
