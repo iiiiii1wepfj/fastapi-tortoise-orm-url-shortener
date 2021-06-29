@@ -134,11 +134,13 @@ async def homepage_post(
     try:
         add_the_link = await add_link(url=url, slug=theslug, host=thehost)
         result = add_the_link["link"]
+        thetype = "the url"
     except Exception as e:
         result = e
+        thetype = type(e)
     return templates.TemplateResponse(
         "results.html",
-        context={"request": request, "type": "the url", "result": result},
+        context={"request": request, "type": thetype, "result": result},
     )
 
 
