@@ -9,6 +9,7 @@ from typing import Optional
 from secrets import choice
 from random import randint
 from loguru import logger
+from config import database_url, port
 import uvicorn, re, sys
 
 logger.add(
@@ -218,8 +219,8 @@ async def internal_server_error(request: Request, the_error: HTTPException):
 app.include_router(apirouter)
 register_tortoise(
     app,
-    db_url="sqlite://linksdb.sqlite",
+    db_url=database_url,
     modules={"models": [__name__]},
     generate_schemas=True,
 )
-uvicorn.run(app=app, host="0.0.0.0", port=8000)
+uvicorn.run(app=app, host="0.0.0.0", port=port)
