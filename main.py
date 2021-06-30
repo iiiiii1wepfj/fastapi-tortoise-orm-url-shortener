@@ -31,18 +31,6 @@ app = FastAPI(docs_url=None, title="url shortener")
 slug_allowed_characters = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 
-class InvalidSlugError(Exception):
-    pass
-
-
-class SlugDosentExistsError(Exception):
-    pass
-
-
-class SlugAlreadyExistsError(Exception):
-    pass
-
-
 async def link_exists(slug: str):
     return await Links.exists(slug=slug)
 
@@ -66,12 +54,14 @@ async def add_link(url: str, host, slug: Optional[str] = None):
     theslug = slug or await gen_valid_url_slug()
     for i in theslug:
         if not (i.isalpha()) and not (i.isdigit()):
-            raise InvalidSlugError(
-                f"invalid slug: {theslug}\nthe slug must to be english letters or number or both"
+            raise HTTPException(
+                status_code=400,
+                detail=f"invalid slug {theslug}: the slug must to be english letters or number or both",
             )
     if len(theslug) < 4 or len(theslug) > 20:
-        raise InvalidSlugError(
-            f"invalid slug: {theslug}\nthe slug length must to be 4-20"
+        raise HTTPException(
+            status_code=400,
+            detail=f"invalid slug {theslug}: the slug length must to be 4-20",
         )
     else:
         check_if_slug_exists = await link_exists(slug=slug)
@@ -80,13 +70,13 @@ async def add_link(url: str, host, slug: Optional[str] = None):
             await Links.create(slug=theslug, url=theurl, views=0)
             return {"slug": theslug, "url": theurl, "link": f"{host}/{theslug}"}
         else:
-            raise SlugAlreadyExistsError("the slug is already exists")
+            raise HTTPException(status_code=409, detail="the slug is already exists")
 
 
 async def get_link(slug: str, host):
     check_slug_exists = await link_exists(slug=slug)
     if not check_slug_exists:
-        raise SlugDosentExistsError("the slug is not exists")
+        raise HTTPException(status_code=404, detail="the slug is not exists")
     else:
         check_link_db = await Links.get(slug=slug)
         return {
@@ -102,7 +92,7 @@ async def get_link(slug: str, host):
 async def redirect_link(slug: str):
     check_slug_exists = await link_exists(slug=slug)
     if not check_slug_exists:
-        raise SlugDosentExistsError("the slug is not exists")
+        raise HTTPException(status_code=404, detail="the slug is not exists")
     else:
         check_link_db = await Links.get(slug=slug)
         theviews = int(check_link_db.views) + 1
@@ -138,6 +128,8 @@ async def homepage_post(
     except Exception as e:
         result = e
         thetype = type(e).__name__
+        if thetype == "HTTPException":
+            result = e.detail
     return templates.TemplateResponse(
         "results.html",
         context={"request": request, "type": thetype, "result": result},
@@ -164,13 +156,17 @@ async def statspage_post(request: Request, slug: str = Form(...)):
     get_the_link = await get_link(slug=theslug, host=thehost)
     try:
         result = f"\nviews: {get_the_link['views']}, created at: {get_the_link['created_at']}, last time changed at: {get_the_link['last_change_at']}"
+        thetype = f"the stats for the url {get_the_link['link']}"
     except Exception as e:
         result = e
+        thetype = type(e).__name__
+        if thetype == "HTTPException":
+            result = e.detail
     return templates.TemplateResponse(
         "results.html",
         context={
             "request": request,
-            "type": f"the stats for the url {get_the_link['link']}",
+            "type": thetype,
             "result": result,
         },
     )
