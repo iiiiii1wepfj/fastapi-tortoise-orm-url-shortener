@@ -27,7 +27,7 @@ class Links(Model):
     last_db_change_at = fields.DatetimeField(auto_now=True)
 
 
-app = FastAPI(docs_url=None, title="url shortener")
+app = FastAPI(docs_url=None, title="url shortener", description="the source code https://github.com/iiiiii1wepfj/fastapi-tortoise-orm-url-shortener", version="1.0")
 slug_allowed_characters = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 
