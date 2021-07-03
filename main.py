@@ -207,16 +207,16 @@ async def redirect_to_the_url(slug: str):
     theslug = slug.lower()
     return await redirect_link(slug=theslug)
 
-
-@app.exception_handler(500)
-async def internal_server_error(request: Request, the_error: HTTPException):
-    return JSONResponse(
-        status_code=500,
-        content={
-            "error": f"{type(the_error).__name__}: {the_error}",
-            "status_code": "500",
-        },
-    )
+#  if you want show servers errors
+#@app.exception_handler(500)
+#async def internal_server_error(request: Request, the_error: HTTPException):
+#    return JSONResponse(
+#        status_code=500,
+#        content={
+#            "error": f"{type(the_error).__name__}: {the_error}",
+#            "status_code": "500",
+#        },
+#    )
 
 
 app.include_router(apirouter)
