@@ -18,3 +18,8 @@ a url shortener with fastapi and tortoise-orm
  * make a better frontend
 
  if you have more ideas or if you want to add something from the todo-list you can fork the repository and create a pull request (make sure the code is working and using black code format)
+
+# contact me
+ you can open here issue or:
+ * telegram - https://t.me/itayki
+ * mail - itay@itayki.com
