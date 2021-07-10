@@ -207,7 +207,7 @@ async def redirect_to_the_url(slug: str):
     theslug = slug.lower()
     return await redirect_link(slug=theslug)
 
-#  if you want show server errors
+#  if you want to show server errors
 #@app.exception_handler(500)
 #async def internal_server_error(request: Request, the_error: HTTPException):
 #    return JSONResponse(
