@@ -57,8 +57,9 @@ async def gen_valid_url_slug():
 
 async def add_link(url: str, host, slug: Optional[str] = None):
     theslug = slug or await gen_valid_url_slug()
+    theslug = theslug.lower()
     for i in theslug:
-        if not (i.isalpha()) and not (i.isdigit()):
+        if i not in slug_allowed_characters:
             raise HTTPException(
                 status_code=400,
                 detail=f"invalid slug {theslug}: the slug must to be english letters or number or both",
@@ -207,9 +208,10 @@ async def redirect_to_the_url(slug: str):
     theslug = slug.lower()
     return await redirect_link(slug=theslug)
 
+
 #  if you want to show server errors
-#@app.exception_handler(500)
-#async def internal_server_error(request: Request, the_error: HTTPException):
+# @app.exception_handler(500)
+# async def internal_server_error(request: Request, the_error: HTTPException):
 #    return JSONResponse(
 #        status_code=500,
 #        content={
