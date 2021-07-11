@@ -75,7 +75,12 @@ async def add_link(url: str, host, slug: Optional[str] = None):
         if not check_if_slug_exists:
             theurl = url if re.match(r"^https?://", url) else "http://" + url
             await Links.create(slug=theslug, url=theurl, views=0)
-            return {"slug": theslug, "url": theurl, "link": f"{host}/{theslug}"}
+            return {
+                "slug": theslug,
+                "url": theurl,
+                "link": f"{host}/{theslug}",
+                "qr_code": f"{host}/{theslug}/qr",
+            }
         else:
             raise HTTPException(status_code=409, detail="the slug is already exists")
 
@@ -94,6 +99,7 @@ async def get_link(slug: str, host):
             "views": check_link_db.views,
             "created_at": check_link_db.created_at,
             "last_change_at": check_link_db.last_db_change_at,
+            "qr_code": f"{host}/{theslug}/qr",
         }
 
 
