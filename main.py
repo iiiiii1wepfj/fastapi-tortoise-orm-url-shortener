@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, Form, APIRouter
 from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import RedirectResponse, StreamingResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import HTTPException
 from tortoise import fields, Model
@@ -9,8 +9,9 @@ from typing import Optional
 from secrets import choice
 from random import randint
 from loguru import logger
+from io import BytesIO
 from config import database_url, port
-import uvicorn, re, sys
+import uvicorn, re, sys, qrcode
 
 logger.add(
     sys.stdout,
@@ -80,15 +81,16 @@ async def add_link(url: str, host, slug: Optional[str] = None):
 
 
 async def get_link(slug: str, host):
-    check_slug_exists = await link_exists(slug=slug)
+    theslug = slug.lower()
+    check_slug_exists = await link_exists(slug=theslug)
     if not check_slug_exists:
         raise HTTPException(status_code=404, detail="the slug is not exists")
     else:
-        check_link_db = await Links.get(slug=slug)
+        check_link_db = await Links.get(slug=theslug)
         return {
             "slug": check_link_db.slug,
             "url": check_link_db.url,
-            "link": f"{host}/{slug}",
+            "link": f"{host}/{theslug}",
             "views": check_link_db.views,
             "created_at": check_link_db.created_at,
             "last_change_at": check_link_db.last_db_change_at,
@@ -207,6 +209,25 @@ async def get_the_links_count():
 async def redirect_to_the_url(slug: str):
     theslug = slug.lower()
     return await redirect_link(slug=theslug)
+
+
+@app.api_route("/{slug}/qr", methods=["POST", "GET"])
+async def gen_qr_code(slug: str, request: Request):
+    thehost = request.headers["host"]
+    try:
+        thelink = await get_link(slug=slug, host=thehost)
+        thelink = thelink["link"]
+    except Exception as e:
+        result = e
+        thetype = type(e).__name__
+        if thetype == "HTTPException":
+            result = e.detail
+        return {"error": thetype, "detail": result}
+    make_qr_code = qrcode.make(thelink)
+    bytes_qr_code = BytesIO()
+    make_qr_code.save(bytes_qr_code)
+    qr_code_result = BytesIO(bytes_qr_code.getvalue())
+    return StreamingResponse(qr_code_result, media_type="image/jpeg")
 
 
 #  if you want to show server errors
