@@ -183,7 +183,7 @@ async def statspage_post(request: Request, slug: str = Form(...)):
         theslug = None
     get_the_link = await get_link(slug=theslug, host=thehost)
     try:
-        result = f"\nviews: {get_the_link['views']}, created at: {get_the_link['created_at']}, last time changed at: {get_the_link['last_change_at']}"
+        result = f"\nviews: {get_the_link['views']}, created at: {get_the_link['created_at']}, last time changed at: {get_the_link['last_change_at']}, qr code: {get_the_link['qr_code']}"
         thetype = f"the stats for the url {get_the_link['link']}"
     except Exception as e:
         result = e
