@@ -232,7 +232,7 @@ async def redirect_to_the_url(slug: str):
 
 
 @app.api_route("/{slug}/qr", methods=["POST", "GET"])
-async def gen_qr_code(slug: str, request: Request):
+async def generate_qr_code(slug: str, request: Request):
     thehost = request.headers["host"]
     get_the_link_qr_code = await get_link_qr(slug=slug, host=thehost)
     return get_the_link_qr_code
