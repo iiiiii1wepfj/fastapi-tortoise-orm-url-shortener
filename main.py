@@ -97,6 +97,20 @@ async def get_link(slug: str, host):
         }
 
 
+async def get_link_qr(slug: str, host):
+    theslug = slug.lower()
+    check_slug_exists = await link_exists(slug=theslug)
+    if not check_slug_exists:
+        raise HTTPException(status_code=404, detail="the slug is not exists")
+    else:
+        thelink = f"{host}/{theslug}"
+        make_qr_code = qrcode.make(thelink)
+        bytes_qr_code = BytesIO()
+        make_qr_code.save(bytes_qr_code)
+        qr_code_result = BytesIO(bytes_qr_code.getvalue())
+        return StreamingResponse(qr_code_result, media_type="image/jpeg")
+
+
 async def redirect_link(slug: str):
     check_slug_exists = await link_exists(slug=slug)
     if not check_slug_exists:
@@ -214,20 +228,8 @@ async def redirect_to_the_url(slug: str):
 @app.api_route("/{slug}/qr", methods=["POST", "GET"])
 async def gen_qr_code(slug: str, request: Request):
     thehost = request.headers["host"]
-    try:
-        thelink = await get_link(slug=slug, host=thehost)
-        thelink = thelink["link"]
-    except Exception as e:
-        result = e
-        thetype = type(e).__name__
-        if thetype == "HTTPException":
-            result = e.detail
-        return {"error": thetype, "detail": result}
-    make_qr_code = qrcode.make(thelink)
-    bytes_qr_code = BytesIO()
-    make_qr_code.save(bytes_qr_code)
-    qr_code_result = BytesIO(bytes_qr_code.getvalue())
-    return StreamingResponse(qr_code_result, media_type="image/jpeg")
+    get_the_link_qr_code = await get_link_qr(slug=slug, host=thehost)
+    return get_the_link_qr_code
 
 
 #  if you want to show server errors
