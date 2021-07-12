@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, Form, APIRouter
 from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.responses import RedirectResponse, StreamingResponse, JSONResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import HTTPException
 from tortoise import fields, Model
@@ -35,6 +35,7 @@ app = FastAPI(
     version="1.0",
 )
 slug_allowed_characters = "abcdefghijklmnopqrstuvwxyz0123456789"
+show_server_errors = False
 
 
 async def link_exists(slug: str):
@@ -238,16 +239,22 @@ async def generate_qr_code(slug: str, request: Request):
     return get_the_link_qr_code
 
 
-#  if you want to show server errors
-# @app.exception_handler(500)
-# async def internal_server_error(request: Request, the_error: HTTPException):
-#    return JSONResponse(
-#        status_code=500,
-#        content={
-#            "error": f"{type(the_error).__name__}: {the_error}",
-#            "status_code": "500",
-#        },
-#    )
+if show_server_errors:
+    from fastapi.responses import JSONResponse
+
+    @app.exception_handler(500)
+    async def internal_server_error(request: Request, the_error: HTTPException):
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": f"{type(the_error).__name__}: {the_error}",
+                "status_code": "500",
+            },
+        )
+
+
+else:
+    pass
 
 
 app.include_router(apirouter)
