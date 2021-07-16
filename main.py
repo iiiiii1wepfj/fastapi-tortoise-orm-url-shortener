@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Request, Form, APIRouter
-from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import HTTPException
+from fastapi.openapi.docs import get_swagger_ui_html
 from tortoise import fields, Model
 from tortoise.contrib.fastapi import register_tortoise
 from typing import Optional
@@ -57,9 +57,9 @@ async def gen_valid_url_slug():
     return slug
 
 
-async def add_link(url: str, host, slug: Optional[str] = None):
-    theslug = slug or await gen_valid_url_slug()
-    theslug = theslug.lower()
+async def check_if_valid_slug(slug: str):
+    theslug = slug.lower()
+    check_if_slug_exists = await link_exists(slug=theslug)
     for i in theslug:
         if i not in slug_allowed_characters:
             raise HTTPException(
@@ -71,19 +71,24 @@ async def add_link(url: str, host, slug: Optional[str] = None):
             status_code=400,
             detail=f"invalid slug {theslug}: the slug length must to be 4-20",
         )
+    elif check_if_slug_exists:
+        raise HTTPException(status_code=409, detail="the slug is already exists")
     else:
-        check_if_slug_exists = await link_exists(slug=slug)
-        if not check_if_slug_exists:
-            theurl = url if re.match(r"^https?://", url) else "http://" + url
-            await Links.create(slug=theslug, url=theurl, views=0)
-            return {
-                "slug": theslug,
-                "url": theurl,
-                "link": f"{host}/{theslug}",
-                "qr_code": f"{host}/{theslug}/qr",
-            }
-        else:
-            raise HTTPException(status_code=409, detail="the slug is already exists")
+        return True
+
+
+async def add_link(url: str, host, slug: Optional[str] = None):
+    theslug = slug or await gen_valid_url_slug()
+    theslug = theslug.lower()
+    await check_if_valid_slug(slug=theslug)
+    theurl = url if re.match(r"^https?://", url) else "http://" + url
+    await Links.create(slug=theslug, url=theurl, views=0)
+    return {
+        "slug": theslug,
+        "url": theurl,
+        "link": f"{host}/{theslug}",
+        "qr_code": f"{host}/{theslug}/qr",
+    }
 
 
 async def get_link(slug: str, host):
