@@ -21,7 +21,7 @@ logger.add(
 
 
 class Links(Model):
-    slug = fields.CharField(max_length=20, pk=True)
+    slug = fields.CharField(max_length=30, pk=True)
     url = fields.TextField()
     views = fields.IntField()
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -43,7 +43,7 @@ async def link_exists(slug: str):
 
 
 def gen_url_slug():
-    the_slug_length = randint(4, 6)
+    the_slug_length = randint(4, 10)
     slug = "".join(choice(slug_allowed_characters) for i in range(the_slug_length))
     return slug
 
@@ -66,10 +66,10 @@ async def check_if_valid_slug(slug: str):
                 status_code=400,
                 detail=f"invalid slug {theslug}: the slug must to be english letters or number or both",
             )
-    if len(theslug) < 4 or len(theslug) > 20:
+    if len(theslug) < 4 or len(theslug) > 30:
         raise HTTPException(
             status_code=400,
-            detail=f"invalid slug {theslug}: the slug length must to be 4-20",
+            detail=f"invalid slug {theslug}: the slug length must to be 4-30",
         )
     elif check_if_slug_exists:
         raise HTTPException(status_code=409, detail="the slug is already exists")
