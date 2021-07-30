@@ -31,7 +31,7 @@ class Links(Model):
 app = FastAPI(
     docs_url=None,
     title="url shortener",
-    description="the source code: https://github.com/iiiiii1wepfj/fastapi-tortoise-orm-url-shortener, for donations: https://paypal.me/itayki.",
+    description='the source code: <a href="https://github.com/iiiiii1wepfj/fastapi-tortoise-orm-url-shortener">https://github.com/iiiiii1wepfj/fastapi-tortoise-orm-url-shortener</a>, for donations: <a href="https://paypal.me/itayki">https://paypal.me/itayki</a>.',
     version="1.0",
 )
 slug_allowed_characters = "abcdefghijklmnopqrstuvwxyz0123456789"
