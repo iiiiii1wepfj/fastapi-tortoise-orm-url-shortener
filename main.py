@@ -305,7 +305,10 @@ apirouter = APIRouter(prefix="/api")
 
 @apirouter.api_route(
     "/add",
-    methods=["POST", "GET"],
+    methods=[
+        "POST",
+        "GET",
+    ],
     response_class=fastapijsonres,
 )
 async def add_short_url(
@@ -323,7 +326,10 @@ async def add_short_url(
 
 @apirouter.api_route(
     "/get",
-    methods=["POST", "GET"],
+    methods=[
+        "POST",
+        "GET",
+    ],
     response_class=fastapijsonres,
 )
 async def get_link_info(slug: str, request: Request):
@@ -334,7 +340,10 @@ async def get_link_info(slug: str, request: Request):
 
 @apirouter.api_route(
     "/all",
-    methods=["POST", "GET"],
+    methods=[
+        "POST",
+        "GET",
+    ],
     response_class=fastapijsonres,
 )
 async def get_the_links_count():
