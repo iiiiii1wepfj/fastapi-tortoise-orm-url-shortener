@@ -1,5 +1,10 @@
 from fastapi import FastAPI, Request, Form, APIRouter
-from fastapi.responses import RedirectResponse, StreamingResponse, JSONResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
+
+try:
+    from fastapi.responses import ORJSONResponse as fastapijsonres
+except:
+    from fastapi.responses import JSONResponse as fastapijsonres
 from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import HTTPException
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
@@ -220,7 +225,7 @@ async def statspage_post(request: Request, slug: str = Form(...)):
 apirouter = APIRouter(prefix="/api")
 
 
-@apirouter.api_route("/add", methods=["POST", "GET"])
+@apirouter.api_route("/add", methods=["POST", "GET"], response_class=fastapijsonres)
 async def add_short_url(url: str, request: Request, slug: Optional[str] = None):
     thehost = request.url.hostname
     if slug:
@@ -230,14 +235,14 @@ async def add_short_url(url: str, request: Request, slug: Optional[str] = None):
     return await add_link(url=url, slug=theslug, host=thehost)
 
 
-@apirouter.api_route("/get", methods=["POST", "GET"])
+@apirouter.api_route("/get", methods=["POST", "GET"], response_class=fastapijsonres)
 async def get_link_info(slug: str, request: Request):
     thehost = request.url.hostname
     theslug = slug.lower()
     return await get_link(slug=theslug, host=thehost)
 
 
-@apirouter.api_route("/all", methods=["POST", "GET"])
+@apirouter.api_route("/all", methods=["POST", "GET"], response_class=fastapijsonres)
 async def get_the_links_count():
     return {"count": await get_links_count()}
 
@@ -261,7 +266,7 @@ async def method_not_allowed_error_handle(request: Request, the_error: HTTPExcep
     request_full_url = (
         f"{request.url.scheme}://{request.url.hostname}{request.url.path}"
     )
-    return JSONResponse(
+    return fastapijsonres(
         status_code=405,
         content={
             "error": f"the method {request_http_method} is not allowed for {request_full_url}.",
@@ -274,7 +279,7 @@ if show_server_errors:
 
     @app.exception_handler(500)
     async def internal_server_error(request: Request, the_error: HTTPException):
-        return JSONResponse(
+        return fastapijsonres(
             status_code=500,
             content={
                 "error": f"{type(the_error).__name__}: {the_error}.",
