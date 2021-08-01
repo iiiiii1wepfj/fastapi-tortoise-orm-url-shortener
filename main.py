@@ -134,7 +134,11 @@ async def check_if_valid_slug(slug: str):
         return True
 
 
-async def add_link(url: str, host, slug: Optional[str] = None):
+async def add_link(
+    url: str,
+    host,
+    slug: Optional[str] = None,
+):
     theslug = slug or await gen_valid_url_slug()
     theslug = theslug.lower()
     await check_if_valid_slug(slug=theslug)
@@ -277,7 +281,11 @@ apirouter = APIRouter(prefix="/api")
 
 
 @apirouter.api_route("/add", methods=["POST", "GET"], response_class=fastapijsonres)
-async def add_short_url(url: str, request: Request, slug: Optional[str] = None):
+async def add_short_url(
+    url: str,
+    request: Request,
+    slug: Optional[str] = None,
+):
     thehost = request.url.hostname
     if slug:
         theslug = slug.lower()
@@ -312,7 +320,10 @@ async def generate_qr_code(slug: str, request: Request):
 
 
 @app.exception_handler(405)
-async def method_not_allowed_error_handle(request: Request, the_error: HTTPException):
+async def method_not_allowed_error_handle(
+    request: Request,
+    the_error: HTTPException,
+):
     request_http_method = request.method
     request_full_url = (
         f"{request.url.scheme}://{request.url.hostname}{request.url.path}"
@@ -329,7 +340,10 @@ async def method_not_allowed_error_handle(request: Request, the_error: HTTPExcep
 if show_server_errors:
 
     @app.exception_handler(500)
-    async def internal_server_error(request: Request, the_error: HTTPException):
+    async def internal_server_error(
+        request: Request,
+        the_error: HTTPException,
+    ):
         return fastapijsonres(
             status_code=500,
             content={
