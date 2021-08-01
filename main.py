@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, Form, APIRouter
 from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import HTTPException
-from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from tortoise import fields, Model
 from tortoise.contrib.fastapi import register_tortoise
 from typing import Optional
@@ -30,6 +30,7 @@ class Links(Model):
 
 app = FastAPI(
     docs_url=None,
+    redoc_url=None,
     title="url shortener",
     description='the source code: <a href="https://github.com/iiiiii1wepfj/fastapi-tortoise-orm-url-shortener">https://github.com/iiiiii1wepfj/fastapi-tortoise-orm-url-shortener</a>, for donations: <a href="https://paypal.me/itayki">https://paypal.me/itayki</a>.',
     version="1.0",
@@ -171,8 +172,18 @@ async def homepage_post(
 
 
 @app.get("/docs", include_in_schema=False)
-async def the_docs_url_page_web_plugin_func_swagger():
+async def the_docs_swagger_url_page_web_plugin_func_swagger():
     return get_swagger_ui_html(openapi_url=app.openapi_url, title=app.title + " docs")
+
+
+@app.get(path="/redoc", include_in_schema=False)
+async def the_docs_redoc_url_page_web_plugin_func_swagger():
+    the_openapi_url = app.openapi_url
+    the_docs_title = app.title + " docs"
+    return get_redoc_html(
+        openapi_url=the_openapi_url,
+        title=the_docs_title,
+    )
 
 
 @app.get("/get", include_in_schema=False)
