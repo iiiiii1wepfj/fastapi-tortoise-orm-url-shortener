@@ -224,7 +224,11 @@ async def homepage_post(
     else:
         theslug = None
     try:
-        add_the_link = await add_link(url=url, slug=theslug, host=thehost)
+        add_the_link = await add_link(
+            url=url,
+            slug=theslug,
+            host=thehost,
+        )
         result = add_the_link["link"]
         thetype = "the url"
     except Exception as e:
@@ -234,13 +238,22 @@ async def homepage_post(
             result = e.detail
     return templates.TemplateResponse(
         "results.html",
-        context={"request": request, "type": thetype, "result": result},
+        context={
+            "request": request,
+            "type": thetype,
+            "result": result,
+        },
     )
 
 
 @app.get("/docs", include_in_schema=False)
 async def the_docs_swagger_url_page_web_plugin_func_swagger():
-    return get_swagger_ui_html(openapi_url=app.openapi_url, title=app.title + " docs")
+    the_openapi_url = app.openapi_url
+    the_docs_title = app.title + " docs"
+    return get_swagger_ui_html(
+        openapi_url=the_openapi_url,
+        title=the_docs_title,
+    )
 
 
 @app.get(path="/redoc", include_in_schema=False)
@@ -259,7 +272,10 @@ async def statspage(request: Request):
 
 
 @app.post("/get", include_in_schema=False)
-async def statspage_post(request: Request, slug: str = Form(...)):
+async def statspage_post(
+    request: Request,
+    slug: str = Form(...),
+):
     thehost = request.url.hostname
     if slug:
         theslug = slug.lower()
@@ -287,7 +303,11 @@ async def statspage_post(request: Request, slug: str = Form(...)):
 apirouter = APIRouter(prefix="/api")
 
 
-@apirouter.api_route("/add", methods=["POST", "GET"], response_class=fastapijsonres)
+@apirouter.api_route(
+    "/add",
+    methods=["POST", "GET"],
+    response_class=fastapijsonres,
+)
 async def add_short_url(
     url: str,
     request: Request,
@@ -301,14 +321,22 @@ async def add_short_url(
     return await add_link(url=url, slug=theslug, host=thehost)
 
 
-@apirouter.api_route("/get", methods=["POST", "GET"], response_class=fastapijsonres)
+@apirouter.api_route(
+    "/get",
+    methods=["POST", "GET"],
+    response_class=fastapijsonres,
+)
 async def get_link_info(slug: str, request: Request):
     thehost = request.url.hostname
     theslug = slug.lower()
     return await get_link(slug=theslug, host=thehost)
 
 
-@apirouter.api_route("/all", methods=["POST", "GET"], response_class=fastapijsonres)
+@apirouter.api_route(
+    "/all",
+    methods=["POST", "GET"],
+    response_class=fastapijsonres,
+)
 async def get_the_links_count():
     return {"count": await get_links_count()}
 
