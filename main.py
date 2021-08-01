@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Form, APIRouter
-from fastapi.responses import RedirectResponse, StreamingResponse
+from fastapi.responses import RedirectResponse, StreamingResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import HTTPException
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
@@ -151,7 +151,7 @@ async def homepage(request: Request):
 async def homepage_post(
     request: Request, url: str = Form(...), slug: Optional[str] = Form(None)
 ):
-    thehost = request.headers["host"]
+    thehost = request.url.hostname
     if slug:
         theslug = slug.lower()
     else:
@@ -193,7 +193,7 @@ async def statspage(request: Request):
 
 @app.post("/get", include_in_schema=False)
 async def statspage_post(request: Request, slug: str = Form(...)):
-    thehost = request.headers["host"]
+    thehost = request.url.hostname
     if slug:
         theslug = slug.lower()
     else:
@@ -222,7 +222,7 @@ apirouter = APIRouter(prefix="/api")
 
 @apirouter.api_route("/add", methods=["POST", "GET"])
 async def add_short_url(url: str, request: Request, slug: Optional[str] = None):
-    thehost = request.headers["host"]
+    thehost = request.url.hostname
     if slug:
         theslug = slug.lower()
     else:
@@ -232,7 +232,7 @@ async def add_short_url(url: str, request: Request, slug: Optional[str] = None):
 
 @apirouter.api_route("/get", methods=["POST", "GET"])
 async def get_link_info(slug: str, request: Request):
-    thehost = request.headers["host"]
+    thehost = request.url.hostname
     theslug = slug.lower()
     return await get_link(slug=theslug, host=thehost)
 
@@ -250,20 +250,33 @@ async def redirect_to_the_url(slug: str):
 
 @app.api_route("/{slug}/qr", methods=["POST", "GET"])
 async def generate_qr_code(slug: str, request: Request):
-    thehost = request.headers["host"]
+    thehost = request.url.hostname
     get_the_link_qr_code = await get_link_qr(slug=slug, host=thehost)
     return get_the_link_qr_code
 
 
+@app.exception_handler(404)
+async def page_not_found_error_handle(request: Request, the_error: HTTPException):
+    request_full_url = (
+        f"{request.url.scheme}://{request.url.hostname}{request.url.path}"
+    )
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": f"page {request_full_url} is not found.",
+            "status_code": "404",
+        },
+    )
+
+
 if show_server_errors:
-    from fastapi.responses import JSONResponse
 
     @app.exception_handler(500)
     async def internal_server_error(request: Request, the_error: HTTPException):
         return JSONResponse(
             status_code=500,
             content={
-                "error": f"{type(the_error).__name__}: {the_error}",
+                "error": f"{type(the_error).__name__}: {the_error}.",
                 "status_code": "500",
             },
         )
