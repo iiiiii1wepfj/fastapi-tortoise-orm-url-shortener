@@ -1,22 +1,32 @@
 from fastapi import FastAPI, Request, Form, APIRouter
+from fastapi import __version__ as fastapi_version
 from fastapi.responses import RedirectResponse, StreamingResponse
 
 try:
     from fastapi.responses import ORJSONResponse as fastapijsonres
+    from orjson import __version__ as orjson_version
 except:
     from fastapi.responses import JSONResponse as fastapijsonres
+
+    orjson_version = "not found"
 from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import HTTPException
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
+from starlette import __version__ as starlette_version
 from tortoise import fields, Model
 from tortoise.contrib.fastapi import register_tortoise
+from tortoise import __version__ as tortoise_version
 from typing import Optional
 from secrets import choice
 from random import randint
 from loguru import logger
+from loguru import __version__ as loguru_version
 from io import BytesIO
+from platform import python_version as get_python_version
 from config import database_url, port
-import uvicorn, re, sys, qrcode
+import uvicorn, re, sys, qrcode, os, jinja2, pydantic
+
+app_version = "1.0"
 
 logger.add(
     sys.stdout,
@@ -38,10 +48,42 @@ app = FastAPI(
     redoc_url=None,
     title="url shortener",
     description='the source code: <a href="https://github.com/iiiiii1wepfj/fastapi-tortoise-orm-url-shortener">https://github.com/iiiiii1wepfj/fastapi-tortoise-orm-url-shortener</a>, for donations: <a href="https://paypal.me/itayki">https://paypal.me/itayki</a>.',
-    version="1.0",
+    version=app_version,
 )
 slug_allowed_characters = "abcdefghijklmnopqrstuvwxyz0123456789"
 show_server_errors = False
+
+
+@app.on_event("startup")
+async def app_startup_actions():
+    py_version = get_python_version()
+    uvicorn_version = uvicorn.__version__
+    jinja2_version = jinja2.__version__
+    pydantic_version = pydantic.version.VERSION
+    re_version = re.__version__
+    app_pid = os.getpid()
+    logger.info(
+        "app started.\n"
+        f"python version: {py_version},\n"
+        f"app version: {app_version},\n"
+        f"tortoise-orm version: {tortoise_version},\n"
+        f"fastapi version: {fastapi_version},\n"
+        f"starlette version: {starlette_version},\n"
+        f"uvicorn version: {uvicorn_version},\n"
+        f"jinja2 version: {jinja2_version},\n"
+        f"orjson version: {orjson_version},\n"
+        f"pydantic version: {pydantic_version},\n"
+        f"re version: {re_version},\n"
+        f"loguru version: {loguru_version},\n"
+        f"app pid: {app_pid}."
+    )
+
+
+@app.on_event("shutdown")
+async def app_shutdown_actions():
+    logger.info(
+        "app stopped, bye.",
+    )
 
 
 async def link_exists(slug: str):
