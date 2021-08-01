@@ -31,6 +31,8 @@ app_version = "1.0"
 min_slug_len = 4
 max_slug_len = 30
 max_auto_slug_len = 10
+slug_allowed_characters = "abcdefghijklmnopqrstuvwxyz0123456789"
+show_server_errors = False
 
 logger.add(
     sys.stdout,
@@ -54,8 +56,6 @@ app = FastAPI(
     description='the source code: <a href="https://github.com/iiiiii1wepfj/fastapi-tortoise-orm-url-shortener">https://github.com/iiiiii1wepfj/fastapi-tortoise-orm-url-shortener</a>, for donations: <a href="https://paypal.me/itayki">https://paypal.me/itayki</a>.',
     version=app_version,
 )
-slug_allowed_characters = "abcdefghijklmnopqrstuvwxyz0123456789"
-show_server_errors = False
 
 
 @app.on_event("startup")
