@@ -23,6 +23,7 @@ from loguru import logger
 from loguru import __version__ as loguru_version
 from io import BytesIO
 from platform import python_version as get_python_version
+from pkg_resources import get_distribution
 from config import database_url, port
 import uvicorn, re, sys, qrcode, os, jinja2, pydantic
 
@@ -61,6 +62,7 @@ async def app_startup_actions():
     jinja2_version = jinja2.__version__
     pydantic_version = pydantic.version.VERSION
     re_version = re.__version__
+    qr_code_lib_version = get_distribution("qrcode").version
     app_pid = os.getpid()
     logger.info(
         "app started.\n"
@@ -74,6 +76,7 @@ async def app_startup_actions():
         f"orjson version: {orjson_version},\n"
         f"pydantic version: {pydantic_version},\n"
         f"re version: {re_version},\n"
+        f"qrcode version: {qr_code_lib_version},\n"
         f"loguru version: {loguru_version},\n"
         f"app pid: {app_pid}."
     )
