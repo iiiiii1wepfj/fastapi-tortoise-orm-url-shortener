@@ -255,16 +255,17 @@ async def generate_qr_code(slug: str, request: Request):
     return get_the_link_qr_code
 
 
-@app.exception_handler(404)
-async def page_not_found_error_handle(request: Request, the_error: HTTPException):
+@app.exception_handler(405)
+async def method_not_allowed_error_handle(request: Request, the_error: HTTPException):
+    request_http_method = request.method
     request_full_url = (
         f"{request.url.scheme}://{request.url.hostname}{request.url.path}"
     )
     return JSONResponse(
-        status_code=404,
+        status_code=405,
         content={
-            "error": f"page {request_full_url} is not found.",
-            "status_code": "404",
+            "error": f"the method {request_http_method} is not allowed for {request_full_url}.",
+            "status_code": "405",
         },
     )
 
