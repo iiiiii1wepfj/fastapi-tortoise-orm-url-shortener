@@ -28,6 +28,9 @@ from config import database_url, port
 import uvicorn, re, sys, qrcode, os, jinja2, pydantic
 
 app_version = "1.0"
+min_slug_len = 4
+max_slug_len = 30
+max_auto_slug_len = 10
 
 logger.add(
     sys.stdout,
@@ -37,7 +40,7 @@ logger.add(
 
 
 class Links(Model):
-    slug = fields.CharField(max_length=30, pk=True)
+    slug = fields.CharField(max_length=max_slug_len, pk=True)
     url = fields.TextField()
     views = fields.IntField()
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -94,7 +97,7 @@ async def link_exists(slug: str):
 
 
 def gen_url_slug():
-    the_slug_length = randint(4, 10)
+    the_slug_length = randint(min_slug_len, max_auto_slug_len)
     slug = "".join(choice(slug_allowed_characters) for i in range(the_slug_length))
     return slug
 
@@ -117,13 +120,16 @@ async def check_if_valid_slug(slug: str):
                 status_code=400,
                 detail=f"invalid slug {theslug}: the slug must to be english letters or number or both",
             )
-    if len(theslug) < 4 or len(theslug) > 30:
+    if len(theslug) < min_slug_len or len(theslug) > max_slug_len:
         raise HTTPException(
             status_code=400,
-            detail=f"invalid slug {theslug}: the slug length must to be 4-30",
+            detail=f"invalid slug {theslug}: the slug length must to be {min_slug_len}-{max_slug_len}",
         )
     elif check_if_slug_exists:
-        raise HTTPException(status_code=409, detail="the slug is already exists")
+        raise HTTPException(
+            status_code=409,
+            detail="the slug is already exists",
+        )
     else:
         return True
 
