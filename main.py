@@ -24,7 +24,12 @@ from loguru import __version__ as loguru_version
 from io import BytesIO
 from platform import python_version as get_python_version
 from pkg_resources import get_distribution
-from config import database_url, port
+
+try:
+    from config import database_url, port
+except:
+    database_url = "sqlite://linksdb.sqlite"
+    port = 8000
 import uvicorn, re, sys, qrcode, os, jinja2, pydantic
 
 app_version = "1.0"
