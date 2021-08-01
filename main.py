@@ -214,7 +214,9 @@ async def homepage(request: Request):
 
 @app.post("/", include_in_schema=False)
 async def homepage_post(
-    request: Request, url: str = Form(...), slug: Optional[str] = Form(None)
+    request: Request,
+    url: str = Form(...),
+    slug: Optional[str] = Form(None),
 ):
     thehost = request.url.hostname
     if slug:
