@@ -321,7 +321,12 @@ async def add_short_url(
         theslug = slug.lower()
     else:
         theslug = None
-    return await add_link(url=url, slug=theslug, host=thehost)
+    add_link_func_res = await add_link(
+        url=url,
+        slug=theslug,
+        host=thehost,
+    )
+    return add_link_func_res
 
 
 @apirouter.api_route(
@@ -335,7 +340,8 @@ async def add_short_url(
 async def get_link_info(slug: str, request: Request):
     thehost = request.url.hostname
     theslug = slug.lower()
-    return await get_link(slug=theslug, host=thehost)
+    get_link_func_res = await get_link(slug=theslug, host=thehost)
+    return get_link_func_res
 
 
 @apirouter.api_route(
