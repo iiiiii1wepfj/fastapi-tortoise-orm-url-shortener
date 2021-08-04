@@ -83,7 +83,8 @@ async def app_startup_actions():
     jinja2_version = jinja2.__version__
     pydantic_version = pydantic.version.VERSION
     re_version = re.__version__
-    qr_code_lib_version = get_distribution("qrcode").version
+    qr_code_lib_version_one = get_distribution("qrcode")
+    qr_code_lib_version = qr_code_lib_version_one.version
     app_pid = os.getpid()
     logger.info(
         "app started.\n"
