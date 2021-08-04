@@ -23,7 +23,9 @@ from loguru import logger
 from loguru import __version__ as loguru_version
 from io import BytesIO
 from platform import python_version as get_python_version
+from user_agents import parse as parse_user_agent
 from pkg_resources import get_distribution
+from collections import Counter as collections_items_counter
 
 try:
     from config import database_url, port
@@ -52,6 +54,16 @@ class Links(Model):
     views = fields.IntField()
     created_at = fields.DatetimeField(auto_now_add=True)
     last_db_change_at = fields.DatetimeField(auto_now=True)
+    stats: fields.ReverseRelation["LinkStats"]
+
+
+class LinkStats(Model):
+    slug: fields.ForeignKeyRelation[Links] = fields.ForeignKeyField(
+        "models.Links", related_name="stats", pk=True
+    )
+    browser = fields.TextField()
+    os = fields.TextField()
+    time = fields.DatetimeField(auto_now_add=True)
 
 
 app = FastAPI(
@@ -189,7 +201,7 @@ async def get_link_qr(slug: str, host):
         return StreamingResponse(qr_code_result, media_type="image/jpeg")
 
 
-async def redirect_link(slug: str):
+async def redirect_link(slug: str, request_agent):
     check_slug_exists = await link_exists(slug=slug)
     if not check_slug_exists:
         raise HTTPException(status_code=404, detail="the slug is not exists")
@@ -197,7 +209,26 @@ async def redirect_link(slug: str):
         check_link_db = await Links.get(slug=slug)
         theviews = int(check_link_db.views) + 1
         await Links.filter(slug=slug).update(views=theviews)
+        try:
+            parse_the_user_agent = parse_user_agent(request_agent)
+            browser = parse_the_user_agent.browser.family.capitalize()
+            os = parse_the_user_agent.os.family.capitalize()
+            await LinkStats.create(slug=check_link_db, browser=browser, os=os)
+        except:
+            pass
         return RedirectResponse(check_link_db.url)
+
+
+async def get_clicks_stats_by_the_slug(slug: str):
+    check_slug_exists = await link_exists(slug=slug)
+    if not check_slug_exists:
+        raise HTTPException(status_code=404, detail="the slug is not exists")
+    else:
+        get_click_stats = await LinkStats.filter(slug=slug)
+        browser_count = collections_items_counter(i.browser for i in get_click_stats)
+        os_count = collections_items_counter(i.os for i in get_click_stats)
+        all_count_stats = {"browsers": browser_count, "operating_systems": os_count}
+        return all_count_stats
 
 
 async def get_links_count():
@@ -344,6 +375,13 @@ async def get_link_info(slug: str, request: Request):
     return get_link_func_res
 
 
+@apirouter.api_route("/click_stats", methods=["POST", "GET"])
+async def get_slug_click_stats(slug: str):
+    theslug = slug.lower()
+    the_link_click_stats_get = await get_clicks_stats_by_the_slug(slug=theslug)
+    return the_link_click_stats_get
+
+
 @apirouter.api_route(
     "/all",
     methods=[
@@ -357,9 +395,10 @@ async def get_the_links_count():
 
 
 @app.get("/{slug}")
-async def redirect_to_the_url(slug: str):
+async def redirect_to_the_url(slug: str, request: Request):
     theslug = slug.lower()
-    return await redirect_link(slug=theslug)
+    req_user_agent = request.headers["user-agent"]
+    return await redirect_link(slug=theslug, request_agent=req_user_agent)
 
 
 @app.api_route("/{slug}/qr", methods=["POST", "GET"])
