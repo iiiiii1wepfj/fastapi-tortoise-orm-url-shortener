@@ -245,7 +245,9 @@ async def get_clicks_stats_by_the_slug(slug: str):
 
 
 async def get_links_count():
-    return await Links.all().count()
+    get_all_links = await Links.all()
+    get_all_links_count = get_all_links.count()
+    return get_all_links_count
 
 
 templates = Jinja2Templates(directory="templates")
