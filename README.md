@@ -13,7 +13,8 @@ a url shortener with fastapi and tortoise-orm
  after running the main.py file, in the endpoint /docs
 
 # todo
- * add analytics by slug (show how much clicks by: operating system, browser, country)
+ * add country and referrer to the click stats
+ * add the click stats to the frontend
  * make option to register/login for some options like edit my links, delete my links and more
  * make a better frontend
 
