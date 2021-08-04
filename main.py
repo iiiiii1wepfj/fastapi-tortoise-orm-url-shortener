@@ -63,6 +63,7 @@ class LinkStats(Model):
     )
     browser = fields.TextField()
     os = fields.TextField()
+    ref = fields.TextField(default="None", null=True)
     time = fields.DatetimeField(auto_now_add=True)
 
 
@@ -201,7 +202,7 @@ async def get_link_qr(slug: str, host):
         return StreamingResponse(qr_code_result, media_type="image/jpeg")
 
 
-async def redirect_link(slug: str, request_agent):
+async def redirect_link(slug: str, request_headers):
     check_slug_exists = await link_exists(slug=slug)
     if not check_slug_exists:
         raise HTTPException(status_code=404, detail="the slug is not exists")
@@ -210,10 +211,16 @@ async def redirect_link(slug: str, request_agent):
         theviews = int(check_link_db.views) + 1
         await Links.filter(slug=slug).update(views=theviews)
         try:
-            parse_the_user_agent = parse_user_agent(request_agent)
+            parse_the_user_agent = parse_user_agent(request_headers["user-agent"])
             browser = parse_the_user_agent.browser.family.capitalize()
             os = parse_the_user_agent.os.family.capitalize()
-            await LinkStats.create(slug=check_link_db, browser=browser, os=os)
+            if "referer" in request_headers:
+                req_ref = request_headers["referer"]
+            else:
+                req_ref = "None"
+            await LinkStats.create(
+                slug=check_link_db, browser=browser, os=os, ref=req_ref
+            )
         except:
             pass
         return RedirectResponse(check_link_db.url)
@@ -227,7 +234,12 @@ async def get_clicks_stats_by_the_slug(slug: str):
         get_click_stats = await LinkStats.filter(slug=slug)
         browser_count = collections_items_counter(i.browser for i in get_click_stats)
         os_count = collections_items_counter(i.os for i in get_click_stats)
-        all_count_stats = {"browsers": browser_count, "operating_systems": os_count}
+        ref_count = collections_items_counter(i.ref for i in get_click_stats)
+        all_count_stats = {
+            "browsers": browser_count,
+            "operating_systems": os_count,
+            "ref": ref_count,
+        }
         return all_count_stats
 
 
@@ -397,8 +409,8 @@ async def get_the_links_count():
 @app.get("/{slug}")
 async def redirect_to_the_url(slug: str, request: Request):
     theslug = slug.lower()
-    req_user_agent = request.headers["user-agent"]
-    return await redirect_link(slug=theslug, request_agent=req_user_agent)
+    req_headers = request.headers
+    return await redirect_link(slug=theslug, request_headers=req_headers)
 
 
 @app.api_route("/{slug}/qr", methods=["POST", "GET"])
