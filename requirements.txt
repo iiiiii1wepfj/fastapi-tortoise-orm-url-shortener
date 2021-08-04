@@ -3,6 +3,7 @@ uvicorn
 tortoise-orm
 loguru
 qrcode[pil]
+user-agents
 # optional for postgresql
 
 asyncpg
