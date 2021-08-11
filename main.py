@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, Form, APIRouter
 from fastapi import __version__ as fastapi_version
-from fastapi.responses import RedirectResponse, StreamingResponse
+from fastapi.responses import RedirectResponse, StreamingResponse, HTMLResponse
 
 try:
     from fastapi.responses import ORJSONResponse as fastapijsonres
@@ -26,6 +26,7 @@ from platform import python_version as get_python_version
 from user_agents import parse as parse_user_agent
 from pkg_resources import get_distribution
 from collections import Counter as collections_items_counter
+from plotly import graph_objects as plotlygraph_objects, io as plotlyio
 
 try:
     from config import database_url, port
@@ -344,6 +345,116 @@ async def statspage_post(
             "result": result,
         },
     )
+
+
+@app.get("/getclick_browser", include_in_schema=False)
+async def getclickstatsbrowserpage(request: Request):
+    return templates.TemplateResponse("stats.html", context={"request": request})
+
+
+@app.post("/getclick_browser", include_in_schema=False)
+async def getclickstatsbrowserpage_post(
+    request: Request,
+    slug: str = Form(...),
+):
+    if slug:
+        theslug = slug.lower()
+    else:
+        theslug = None
+    try:
+        the_link_click_stats_get = await get_clicks_stats_by_the_slug(slug=theslug)
+        reqjsonbrowsers = the_link_click_stats_get["browsers"]
+        x = list(reqjsonbrowsers.keys())
+        y = list(reqjsonbrowsers.values())
+
+        thegraph_one = plotlygraph_objects.Figure(
+            data=[
+                plotlygraph_objects.Bar(
+                    x=x,
+                    y=y,
+                    text=x,
+                    textposition="auto",
+                    marker=plotlygraph_objects.bar.Marker(
+                        color=list(range(len(x))), colorscale="Viridis"
+                    ),
+                )
+            ]
+        )
+        htmlgraph = plotlyio.to_html(
+            thegraph_one,
+            config={"displayModeBar": False},
+            default_width="50%",
+            default_height="50%",
+        )
+        return HTMLResponse(content=htmlgraph)
+    except Exception as e:
+        result = e
+        thetype = type(e).__name__
+        if thetype == "HTTPException":
+            result = e.detail
+        return templates.TemplateResponse(
+            "results.html",
+            context={
+                "request": request,
+                "type": thetype,
+                "result": result,
+            },
+        )
+
+
+@app.get("/getclick_os", include_in_schema=False)
+async def getclickstatsospage(request: Request):
+    return templates.TemplateResponse("stats.html", context={"request": request})
+
+
+@app.post("/getclick_os", include_in_schema=False)
+async def getclickstatsospage_post(
+    request: Request,
+    slug: str = Form(...),
+):
+    if slug:
+        theslug = slug.lower()
+    else:
+        theslug = None
+    try:
+        the_link_click_stats_get = await get_clicks_stats_by_the_slug(slug=theslug)
+        reqjsonos = the_link_click_stats_get["operating_systems"]
+        x = list(reqjsonos.keys())
+        y = list(reqjsonos.values())
+
+        thegraph_one = plotlygraph_objects.Figure(
+            data=[
+                plotlygraph_objects.Bar(
+                    x=x,
+                    y=y,
+                    text=x,
+                    textposition="auto",
+                    marker=plotlygraph_objects.bar.Marker(
+                        color=list(range(len(x))), colorscale="Viridis"
+                    ),
+                )
+            ]
+        )
+        htmlgraph = plotlyio.to_html(
+            thegraph_one,
+            config={"displayModeBar": False},
+            default_width="50%",
+            default_height="50%",
+        )
+        return HTMLResponse(content=htmlgraph)
+    except Exception as e:
+        result = e
+        thetype = type(e).__name__
+        if thetype == "HTTPException":
+            result = e.detail
+        return templates.TemplateResponse(
+            "results.html",
+            context={
+                "request": request,
+                "type": thetype,
+                "result": result,
+            },
+        )
 
 
 apirouter = APIRouter(prefix="/api")
