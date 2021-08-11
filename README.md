@@ -14,7 +14,6 @@ a url shortener with fastapi and tortoise-orm
 
 # todo
  * add country to the click stats
- * add the click stats to the frontend
  * make option to register/login for some options like edit my links, delete my links and more
  * make a better frontend
 
