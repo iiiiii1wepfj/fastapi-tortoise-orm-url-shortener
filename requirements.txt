@@ -4,6 +4,7 @@ tortoise-orm
 loguru
 qrcode[pil]
 user-agents
+plotly
 # optional for postgresql
 
 asyncpg
