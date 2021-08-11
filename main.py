@@ -26,7 +26,11 @@ from platform import python_version as get_python_version
 from user_agents import parse as parse_user_agent
 from pkg_resources import get_distribution
 from collections import Counter as collections_items_counter
-from plotly import graph_objects as plotlygraph_objects, io as plotlyio
+from plotly import (
+    graph_objects as plotlygraph_objects,
+    io as plotlyio,
+    __version__ as plotly_version,
+)
 
 try:
     from config import database_url, port
@@ -101,6 +105,7 @@ async def app_startup_actions():
         f"re version: {re_version},\n"
         f"qrcode version: {qr_code_lib_version},\n"
         f"loguru version: {loguru_version},\n"
+        f"plotly version: {plotly_version},\n"
         f"app pid: {app_pid}."
     )
 
