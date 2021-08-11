@@ -1,1 +1,1 @@
-*.example linguist-language=Python
+*.py.example linguist-language=Python
