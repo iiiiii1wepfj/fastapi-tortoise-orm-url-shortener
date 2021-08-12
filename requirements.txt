@@ -5,6 +5,8 @@ loguru
 qrcode[pil]
 user-agents
 plotly
+httpx[http2]
+pytz
 # optional for postgresql
 
 asyncpg

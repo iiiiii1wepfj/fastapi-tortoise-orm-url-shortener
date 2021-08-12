@@ -37,7 +37,7 @@ try:
 except:
     database_url = "sqlite://linksdb.sqlite"
     port = 8000
-import uvicorn, re, sys, qrcode, os, jinja2, pydantic
+import uvicorn, re, sys, qrcode, os, jinja2, pydantic, httpx, pytz
 
 app_version = "1.0"
 min_slug_len = 4
@@ -45,6 +45,7 @@ max_slug_len = 30
 max_auto_slug_len = 10
 slug_allowed_characters = "abcdefghijklmnopqrstuvwxyz0123456789"
 show_server_errors = False
+httpxhttpsession = httpx.AsyncClient()
 
 logger.add(
     sys.stdout,
@@ -68,6 +69,7 @@ class LinkStats(Model):
     )
     browser = fields.TextField()
     os = fields.TextField()
+    country = fields.TextField(default="None", null=True)
     ref = fields.TextField(default="None", null=True)
     time = fields.DatetimeField(auto_now_add=True)
 
@@ -90,6 +92,8 @@ async def app_startup_actions():
     re_version = re.__version__
     qr_code_lib_version_one = get_distribution("qrcode")
     qr_code_lib_version = qr_code_lib_version_one.version
+    httpx_version = httpx.__version__
+    pytz_version = pytz.__version__
     app_pid = os.getpid()
     logger.info(
         "app started.\n"
@@ -106,12 +110,15 @@ async def app_startup_actions():
         f"qrcode version: {qr_code_lib_version},\n"
         f"loguru version: {loguru_version},\n"
         f"plotly version: {plotly_version},\n"
+        f"httpx version: {httpx_version},\n"
+        f"pytz version: {pytz_version},\n"
         f"app pid: {app_pid}."
     )
 
 
 @app.on_event("shutdown")
 async def app_shutdown_actions():
+    await httpxhttpsession.aclose()
     logger.info(
         "app stopped, bye.",
     )
@@ -134,6 +141,32 @@ async def gen_valid_url_slug():
         if not check_slug:
             break
     return slug
+
+
+async def get_the_client_ip(therequest):
+    if "x-forwarded-for" in therequest.headers:
+        the_client_ip = therequest.headers["x-forwarded-for"]
+    else:
+        the_client_ip = therequest.client.host
+    return the_client_ip
+
+
+async def get_geoip(ip):
+    get_the_ip_location = await httpxhttpsession.get(f"https://api.country.is/{ip}")
+    if not get_the_ip_location.is_error:
+        thereqjson = get_the_ip_location.json()
+        thecountry = thereqjson["country"]
+        if thecountry != None:
+            try:
+                thecountry_code = thecountry.lower()
+                thecountryname = pytz.country_names[thecountry_code]
+            except:
+                thecountryname = thecountry.lower()
+            return thecountryname
+        else:
+            return "None"
+    else:
+        return "None"
 
 
 async def check_if_valid_slug(slug: str):
@@ -209,7 +242,7 @@ async def get_link_qr(slug: str, host):
         return StreamingResponse(qr_code_result, media_type="image/jpeg")
 
 
-async def redirect_link(slug: str, request_headers):
+async def redirect_link(slug: str, req):
     check_slug_exists = await link_exists(slug=slug)
     if not check_slug_exists:
         raise HTTPException(status_code=404, detail="the slug is not exists")
@@ -218,15 +251,24 @@ async def redirect_link(slug: str, request_headers):
         theviews = int(check_link_db.views) + 1
         await Links.filter(slug=slug).update(views=theviews)
         try:
-            parse_the_user_agent = parse_user_agent(request_headers["user-agent"])
+            parse_the_user_agent = parse_user_agent(req.headers["user-agent"])
             browser = parse_the_user_agent.browser.family.capitalize()
             os = parse_the_user_agent.os.family.capitalize()
-            if "referer" in request_headers:
-                req_ref = request_headers["referer"]
+            if "referer" in req.headers:
+                req_ref = req.headers["referer"]
             else:
                 req_ref = "None"
+            try:
+                get_the_client_ip_for_geoip = await get_the_client_ip(therequest=req)
+                request_geoip_res = await get_geoip(ip=get_the_client_ip_for_geoip)
+            except:
+                request_geoip_res = "None"
             await LinkStats.create(
-                slug=check_link_db, browser=browser, os=os, ref=req_ref
+                slug=check_link_db,
+                browser=browser,
+                os=os,
+                country=request_geoip_res,
+                ref=req_ref,
             )
         except:
             pass
@@ -241,10 +283,12 @@ async def get_clicks_stats_by_the_slug(slug: str):
         get_click_stats = await LinkStats.filter(slug=slug)
         browser_count = collections_items_counter(i.browser for i in get_click_stats)
         os_count = collections_items_counter(i.os for i in get_click_stats)
+        countries_count = collections_items_counter(i.country for i in get_click_stats)
         ref_count = collections_items_counter(i.ref for i in get_click_stats)
         all_count_stats = {
             "browsers": browser_count,
             "operating_systems": os_count,
+            "countries": countries_count,
             "ref": ref_count,
         }
         return all_count_stats
@@ -462,6 +506,61 @@ async def getclickstatsospage_post(
         )
 
 
+@app.get("/getclick_country", include_in_schema=False)
+async def getclickstatsospage(request: Request):
+    return templates.TemplateResponse("stats.html", context={"request": request})
+
+
+@app.post("/getclick_country", include_in_schema=False)
+async def getclickstatsospage_post(
+    request: Request,
+    slug: str = Form(...),
+):
+    if slug:
+        theslug = slug.lower()
+    else:
+        theslug = None
+    try:
+        the_link_click_stats_get = await get_clicks_stats_by_the_slug(slug=theslug)
+        reqjsonos = the_link_click_stats_get["countries"]
+        x = list(reqjsonos.keys())
+        y = list(reqjsonos.values())
+
+        thegraph_one = plotlygraph_objects.Figure(
+            data=[
+                plotlygraph_objects.Bar(
+                    x=x,
+                    y=y,
+                    text=x,
+                    textposition="auto",
+                    marker=plotlygraph_objects.bar.Marker(
+                        color=list(range(len(x))), colorscale="Viridis"
+                    ),
+                )
+            ]
+        )
+        htmlgraph = plotlyio.to_html(
+            thegraph_one,
+            config={"displayModeBar": False},
+            default_width="50%",
+            default_height="50%",
+        )
+        return HTMLResponse(content=htmlgraph)
+    except Exception as e:
+        result = e
+        thetype = type(e).__name__
+        if thetype == "HTTPException":
+            result = e.detail
+        return templates.TemplateResponse(
+            "results.html",
+            context={
+                "request": request,
+                "type": thetype,
+                "result": result,
+            },
+        )
+
+
 apirouter = APIRouter(prefix="/api")
 
 
@@ -528,8 +627,7 @@ async def get_the_links_count():
 @app.get("/{slug}")
 async def redirect_to_the_url(slug: str, request: Request):
     theslug = slug.lower()
-    req_headers = request.headers
-    return await redirect_link(slug=theslug, request_headers=req_headers)
+    return await redirect_link(slug=theslug, req=request)
 
 
 @app.api_route("/{slug}/qr", methods=["POST", "GET"])
