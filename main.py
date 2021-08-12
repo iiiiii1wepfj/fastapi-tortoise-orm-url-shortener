@@ -88,7 +88,8 @@ async def app_startup_actions():
     py_version = get_python_version()
     uvicorn_version = uvicorn.__version__
     jinja2_version = jinja2.__version__
-    pydantic_version = pydantic.version.VERSION
+    pydantic_version_one = pydantic.version
+    pydantic_version = pydantic_version_one.VERSION
     re_version = re.__version__
     qr_code_lib_version_one = get_distribution("qrcode")
     qr_code_lib_version = qr_code_lib_version_one.version
