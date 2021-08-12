@@ -152,7 +152,10 @@ async def get_the_client_ip(therequest):
 
 
 async def get_geoip(ip):
-    get_the_ip_location = await httpxhttpsession.get(f"https://api.country.is/{ip}")
+    try:
+        get_the_ip_location = await httpxhttpsession.get(f"https://api.country.is/{ip}")
+    except:
+        return "None"
     if not get_the_ip_location.is_error:
         thereqjson = get_the_ip_location.json()
         thecountry = thereqjson["country"]
