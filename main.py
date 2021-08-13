@@ -20,7 +20,10 @@ except:
     orjson_version = "not found"
 from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import HTTPException
-from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
+from fastapi.openapi.docs import (
+    get_swagger_ui_html,
+    get_redoc_html,
+)
 from starlette import __version__ as starlette_version
 from tortoise import fields, Model
 from tortoise.contrib.fastapi import register_tortoise
@@ -42,7 +45,10 @@ from plotly import (
 )
 
 try:
-    from config import database_url, port
+    from config import (
+        database_url,
+        port,
+    )
 except:
     database_url = "sqlite://linksdb.sqlite"
     port = 8000
