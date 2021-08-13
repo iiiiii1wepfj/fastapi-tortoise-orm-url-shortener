@@ -4,7 +4,9 @@ from fastapi import (
     Form,
     APIRouter,
 )
-from fastapi import __version__ as fastapi_version
+from fastapi import (
+    __version__ as fastapi_version,
+)
 from fastapi.responses import (
     RedirectResponse,
     StreamingResponse,
@@ -12,10 +14,16 @@ from fastapi.responses import (
 )
 
 try:
-    from fastapi.responses import ORJSONResponse as fastapijsonres
-    from orjson import __version__ as orjson_version
+    from fastapi.responses import (
+        ORJSONResponse as fastapijsonres,
+    )
+    from orjson import (
+        __version__ as orjson_version,
+    )
 except:
-    from fastapi.responses import JSONResponse as fastapijsonres
+    from fastapi.responses import (
+        JSONResponse as fastapijsonres,
+    )
 
     orjson_version = "not found"
 from fastapi.templating import Jinja2Templates
@@ -24,20 +32,32 @@ from fastapi.openapi.docs import (
     get_swagger_ui_html,
     get_redoc_html,
 )
-from starlette import __version__ as starlette_version
+from starlette import (
+    __version__ as starlette_version,
+)
 from tortoise import fields, Model
 from tortoise.contrib.fastapi import register_tortoise
-from tortoise import __version__ as tortoise_version
+from tortoise import (
+    __version__ as tortoise_version,
+)
 from typing import Optional
 from secrets import choice
 from random import randint
 from loguru import logger
-from loguru import __version__ as loguru_version
+from loguru import (
+    __version__ as loguru_version,
+)
 from io import BytesIO
-from platform import python_version as get_python_version
-from user_agents import parse as parse_user_agent
+from platform import (
+    python_version as get_python_version,
+)
+from user_agents import (
+    parse as parse_user_agent,
+)
 from pkg_resources import get_distribution
-from collections import Counter as collections_items_counter
+from collections import (
+    Counter as collections_items_counter,
+)
 from plotly import (
     graph_objects as plotlygraph_objects,
     io as plotlyio,
@@ -52,7 +72,9 @@ try:
 except:
     database_url = "sqlite://linksdb.sqlite"
     port = 8000
-import uvicorn, re, sys, qrcode, os, jinja2, pydantic, httpx, pytz
+import uvicorn, jinja2, pydantic
+import re, sys, os
+import qrcode, httpx, pytz
 
 app_version = "2.0"
 min_slug_len = 4
@@ -539,11 +561,15 @@ async def getclickstatsbrowserpage_post(
         )
         htmlgraph = plotlyio.to_html(
             thegraph_one,
-            config={"displayModeBar": False},
+            config={
+                "displayModeBar": False,
+            },
             default_width="50%",
             default_height="50%",
         )
-        return HTMLResponse(content=htmlgraph)
+        return HTMLResponse(
+            content=htmlgraph,
+        )
     except Exception as e:
         result = e
         thetype = type(e).__name__
@@ -607,7 +633,9 @@ async def getclickstatsospage_post(
         )
         htmlgraph = plotlyio.to_html(
             thegraph_one,
-            config={"displayModeBar": False},
+            config={
+                "displayModeBar": False,
+            },
             default_width="50%",
             default_height="50%",
         )
@@ -675,7 +703,9 @@ async def getclickstatsospage_post(
         )
         htmlgraph = plotlyio.to_html(
             thegraph_one,
-            config={"displayModeBar": False},
+            config={
+                "displayModeBar": False,
+            },
             default_width="50%",
             default_height="50%",
         )
