@@ -55,7 +55,10 @@ logger.add(
 
 
 class Links(Model):
-    slug = fields.CharField(max_length=max_slug_len, pk=True)
+    slug = fields.CharField(
+        max_length=max_slug_len,
+        pk=True,
+    )
     url = fields.TextField()
     views = fields.IntField()
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -65,12 +68,20 @@ class Links(Model):
 
 class LinkStats(Model):
     slug: fields.ForeignKeyRelation[Links] = fields.ForeignKeyField(
-        "models.Links", related_name="stats", pk=True
+        "models.Links",
+        related_name="stats",
+        pk=True,
     )
     browser = fields.TextField()
     os = fields.TextField()
-    country = fields.TextField(default="None", null=True)
-    ref = fields.TextField(default="None", null=True)
+    country = fields.TextField(
+        default="None",
+        null=True,
+    )
+    ref = fields.TextField(
+        default="None",
+        null=True,
+    )
     time = fields.DatetimeField(auto_now_add=True)
 
 
@@ -281,8 +292,12 @@ async def redirect_link(slug: str, req):
             else:
                 req_ref = "None"
             try:
-                get_the_client_ip_for_geoip = await get_the_client_ip(therequest=req)
-                request_geoip_res = await get_geoip(ip=get_the_client_ip_for_geoip)
+                get_the_client_ip_for_geoip = await get_the_client_ip(
+                    therequest=req,
+                )
+                request_geoip_res = await get_geoip(
+                    ip=get_the_client_ip_for_geoip,
+                )
             except:
                 request_geoip_res = "None"
             await LinkStats.create(
@@ -336,7 +351,10 @@ async def homepage(request: Request):
     )
 
 
-@app.post(path="/", include_in_schema=False)
+@app.post(
+    path="/",
+    include_in_schema=False,
+)
 async def homepage_post(
     request: Request,
     url: str = Form(...),
@@ -370,7 +388,10 @@ async def homepage_post(
     )
 
 
-@app.get(path="/docs", include_in_schema=False)
+@app.get(
+    path="/docs",
+    include_in_schema=False,
+)
 async def the_docs_swagger_url_page_web_plugin_func_swagger():
     the_openapi_url = app.openapi_url
     the_docs_title = app.title + " docs"
@@ -380,7 +401,10 @@ async def the_docs_swagger_url_page_web_plugin_func_swagger():
     )
 
 
-@app.get(path="/redoc", include_in_schema=False)
+@app.get(
+    path="/redoc",
+    include_in_schema=False,
+)
 async def the_docs_redoc_url_page_web_plugin_func_swagger():
     the_openapi_url = app.openapi_url
     the_docs_title = app.title + " docs"
@@ -390,7 +414,10 @@ async def the_docs_redoc_url_page_web_plugin_func_swagger():
     )
 
 
-@app.get(path="/get", include_in_schema=False)
+@app.get(
+    path="/get",
+    include_in_schema=False,
+)
 async def statspage(request: Request):
     return templates.TemplateResponse(
         name="stats.html",
@@ -398,7 +425,10 @@ async def statspage(request: Request):
     )
 
 
-@app.post(path="/get", include_in_schema=False)
+@app.post(
+    path="/get",
+    include_in_schema=False,
+)
 async def statspage_post(
     request: Request,
     slug: str = Form(...),
@@ -408,7 +438,10 @@ async def statspage_post(
         theslug = slug.lower()
     else:
         theslug = None
-    get_the_link = await get_link(slug=theslug, host=thehost)
+    get_the_link = await get_link(
+        slug=theslug,
+        host=thehost,
+    )
     try:
         result = f"\nviews: {get_the_link['views']}, created at: {get_the_link['created_at']}, last time changed at: {get_the_link['last_change_at']}, qr code: {get_the_link['qr_code']}"
         thetype = f"the stats for the url {get_the_link['link']}"
@@ -427,7 +460,10 @@ async def statspage_post(
     )
 
 
-@app.get(path="/getclick_browser", include_in_schema=False)
+@app.get(
+    path="/getclick_browser",
+    include_in_schema=False,
+)
 async def getclickstatsbrowserpage(request: Request):
     return templates.TemplateResponse(
         name="stats.html",
@@ -435,7 +471,10 @@ async def getclickstatsbrowserpage(request: Request):
     )
 
 
-@app.post(path="/getclick_browser", include_in_schema=False)
+@app.post(
+    path="/getclick_browser",
+    include_in_schema=False,
+)
 async def getclickstatsbrowserpage_post(
     request: Request,
     slug: str = Form(...),
@@ -445,7 +484,9 @@ async def getclickstatsbrowserpage_post(
     else:
         theslug = None
     try:
-        the_link_click_stats_get = await get_clicks_stats_by_the_slug(slug=theslug)
+        the_link_click_stats_get = await get_clicks_stats_by_the_slug(
+            slug=theslug,
+        )
         reqjsonbrowsers = the_link_click_stats_get["browsers"]
         x = list(reqjsonbrowsers.keys())
         y = list(reqjsonbrowsers.values())
@@ -485,7 +526,10 @@ async def getclickstatsbrowserpage_post(
         )
 
 
-@app.get(path="/getclick_os", include_in_schema=False)
+@app.get(
+    path="/getclick_os",
+    include_in_schema=False,
+)
 async def getclickstatsospage(request: Request):
     return templates.TemplateResponse(
         name="stats.html",
@@ -493,7 +537,10 @@ async def getclickstatsospage(request: Request):
     )
 
 
-@app.post(path="/getclick_os", include_in_schema=False)
+@app.post(
+    path="/getclick_os",
+    include_in_schema=False,
+)
 async def getclickstatsospage_post(
     request: Request,
     slug: str = Form(...),
@@ -503,7 +550,9 @@ async def getclickstatsospage_post(
     else:
         theslug = None
     try:
-        the_link_click_stats_get = await get_clicks_stats_by_the_slug(slug=theslug)
+        the_link_click_stats_get = await get_clicks_stats_by_the_slug(
+            slug=theslug,
+        )
         reqjsonos = the_link_click_stats_get["operating_systems"]
         x = list(reqjsonos.keys())
         y = list(reqjsonos.values())
@@ -543,7 +592,10 @@ async def getclickstatsospage_post(
         )
 
 
-@app.get(path="/getclick_country", include_in_schema=False)
+@app.get(
+    path="/getclick_country",
+    include_in_schema=False,
+)
 async def getclickstatsospage(request: Request):
     return templates.TemplateResponse(
         name="stats.html",
@@ -551,7 +603,10 @@ async def getclickstatsospage(request: Request):
     )
 
 
-@app.post(path="/getclick_country", include_in_schema=False)
+@app.post(
+    path="/getclick_country",
+    include_in_schema=False,
+)
 async def getclickstatsospage_post(
     request: Request,
     slug: str = Form(...),
@@ -561,7 +616,9 @@ async def getclickstatsospage_post(
     else:
         theslug = None
     try:
-        the_link_click_stats_get = await get_clicks_stats_by_the_slug(slug=theslug)
+        the_link_click_stats_get = await get_clicks_stats_by_the_slug(
+            slug=theslug,
+        )
         reqjsonos = the_link_click_stats_get["countries"]
         x = list(reqjsonos.keys())
         y = list(reqjsonos.values())
@@ -638,17 +695,31 @@ async def add_short_url(
     ],
     response_class=fastapijsonres,
 )
-async def get_link_info(slug: str, request: Request):
+async def get_link_info(
+    slug: str,
+    request: Request,
+):
     thehost = request.url.hostname
     theslug = slug.lower()
-    get_link_func_res = await get_link(slug=theslug, host=thehost)
+    get_link_func_res = await get_link(
+        slug=theslug,
+        host=thehost,
+    )
     return get_link_func_res
 
 
-@apirouter.api_route(path="/click_stats", methods=["POST", "GET"])
+@apirouter.api_route(
+    path="/click_stats",
+    methods=[
+        "POST",
+        "GET",
+    ],
+)
 async def get_slug_click_stats(slug: str):
     theslug = slug.lower()
-    the_link_click_stats_get = await get_clicks_stats_by_the_slug(slug=theslug)
+    the_link_click_stats_get = await get_clicks_stats_by_the_slug(
+        slug=theslug,
+    )
     return the_link_click_stats_get
 
 
@@ -661,23 +732,42 @@ async def get_slug_click_stats(slug: str):
     response_class=fastapijsonres,
 )
 async def get_the_links_count():
-    return {"count": await get_links_count()}
+    return {
+        "count": await get_links_count(),
+    }
 
 
 @app.get(path="/{slug}")
-async def redirect_to_the_url(slug: str, request: Request):
+async def redirect_to_the_url(
+    slug: str,
+    request: Request,
+):
     theslug = slug.lower()
     return await redirect_link(slug=theslug, req=request)
 
 
-@app.api_route(path="/{slug}/qr", methods=["POST", "GET"])
-async def generate_qr_code(slug: str, request: Request):
+@app.api_route(
+    path="/{slug}/qr",
+    methods=[
+        "POST",
+        "GET",
+    ],
+)
+async def generate_qr_code(
+    slug: str,
+    request: Request,
+):
     thehost = request.url.hostname
-    get_the_link_qr_code = await get_link_qr(slug=slug, host=thehost)
+    get_the_link_qr_code = await get_link_qr(
+        slug=slug,
+        host=thehost,
+    )
     return get_the_link_qr_code
 
 
-@app.exception_handler(exc_class_or_status_code=405)
+@app.exception_handler(
+    exc_class_or_status_code=405,
+)
 async def method_not_allowed_error_handle(
     request: Request,
     the_error: HTTPException,
@@ -697,7 +787,9 @@ async def method_not_allowed_error_handle(
 
 if show_server_errors:
 
-    @app.exception_handler(exc_class_or_status_code=500)
+    @app.exception_handler(
+        exc_class_or_status_code=500,
+    )
     async def internal_server_error(
         request: Request,
         the_error: HTTPException,
