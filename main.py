@@ -154,7 +154,9 @@ async def get_the_client_ip(therequest):
 
 async def get_geoip(ip):
     try:
-        get_the_ip_location = await httpxhttpsession.get(f"https://api.country.is/{ip}")
+        get_the_ip_location = await httpxhttpsession.get(
+            url=f"https://api.country.is/{ip}"
+        )
     except:
         return "None"
     if not get_the_ip_location.is_error:
