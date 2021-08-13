@@ -1,6 +1,15 @@
-from fastapi import FastAPI, Request, Form, APIRouter
+from fastapi import (
+    FastAPI,
+    Request,
+    Form,
+    APIRouter,
+)
 from fastapi import __version__ as fastapi_version
-from fastapi.responses import RedirectResponse, StreamingResponse, HTMLResponse
+from fastapi.responses import (
+    RedirectResponse,
+    StreamingResponse,
+    HTMLResponse,
+)
 
 try:
     from fastapi.responses import ORJSONResponse as fastapijsonres
