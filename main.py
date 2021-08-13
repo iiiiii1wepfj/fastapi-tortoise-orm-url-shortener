@@ -39,7 +39,7 @@ except:
     port = 8000
 import uvicorn, re, sys, qrcode, os, jinja2, pydantic, httpx, pytz
 
-app_version = "1.0"
+app_version = "2.0"
 min_slug_len = 4
 max_slug_len = 30
 max_auto_slug_len = 10
