@@ -150,7 +150,10 @@ async def link_exists(slug: str):
 
 
 def gen_url_slug():
-    the_slug_length = randint(min_slug_len, max_auto_slug_len)
+    the_slug_length = randint(
+        min_slug_len,
+        max_auto_slug_len,
+    )
     slug = "".join(choice(slug_allowed_characters) for i in range(the_slug_length))
     return slug
 
@@ -356,7 +359,9 @@ templates = Jinja2Templates(directory="templates")
 async def homepage(request: Request):
     return templates.TemplateResponse(
         name="index.html",
-        context={"request": request},
+        context={
+            "request": request,
+        },
     )
 
 
@@ -430,7 +435,9 @@ async def the_docs_redoc_url_page_web_plugin_func_swagger():
 async def statspage(request: Request):
     return templates.TemplateResponse(
         name="stats.html",
-        context={"request": request},
+        context={
+            "request": request,
+        },
     )
 
 
@@ -476,7 +483,9 @@ async def statspage_post(
 async def getclickstatsbrowserpage(request: Request):
     return templates.TemplateResponse(
         name="stats.html",
-        context={"request": request},
+        context={
+            "request": request,
+        },
     )
 
 
@@ -542,7 +551,9 @@ async def getclickstatsbrowserpage_post(
 async def getclickstatsospage(request: Request):
     return templates.TemplateResponse(
         name="stats.html",
-        context={"request": request},
+        context={
+            "request": request,
+        },
     )
 
 
@@ -608,7 +619,9 @@ async def getclickstatsospage_post(
 async def getclickstatsospage(request: Request):
     return templates.TemplateResponse(
         name="stats.html",
-        context={"request": request},
+        context={
+            "request": request,
+        },
     )
 
 
@@ -752,7 +765,10 @@ async def redirect_to_the_url(
     request: Request,
 ):
     theslug = slug.lower()
-    return await redirect_link(slug=theslug, req=request)
+    return await redirect_link(
+        slug=theslug,
+        req=request,
+    )
 
 
 @app.api_route(
