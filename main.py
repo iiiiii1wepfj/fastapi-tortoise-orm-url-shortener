@@ -207,7 +207,11 @@ async def add_link(
     theslug = theslug.lower()
     await check_if_valid_slug(slug=theslug)
     theurl = url if re.match(r"^https?://", url) else "http://" + url
-    await Links.create(slug=theslug, url=theurl, views=0)
+    await Links.create(
+        slug=theslug,
+        url=theurl,
+        views=0,
+    )
     return {
         "slug": theslug,
         "url": theurl,
@@ -326,7 +330,10 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get(path="/", include_in_schema=False)
 async def homepage(request: Request):
-    return templates.TemplateResponse(name="index.html", context={"request": request})
+    return templates.TemplateResponse(
+        name="index.html",
+        context={"request": request},
+    )
 
 
 @app.post(path="/", include_in_schema=False)
@@ -385,7 +392,10 @@ async def the_docs_redoc_url_page_web_plugin_func_swagger():
 
 @app.get(path="/get", include_in_schema=False)
 async def statspage(request: Request):
-    return templates.TemplateResponse(name="stats.html", context={"request": request})
+    return templates.TemplateResponse(
+        name="stats.html",
+        context={"request": request},
+    )
 
 
 @app.post(path="/get", include_in_schema=False)
@@ -419,7 +429,10 @@ async def statspage_post(
 
 @app.get(path="/getclick_browser", include_in_schema=False)
 async def getclickstatsbrowserpage(request: Request):
-    return templates.TemplateResponse(name="stats.html", context={"request": request})
+    return templates.TemplateResponse(
+        name="stats.html",
+        context={"request": request},
+    )
 
 
 @app.post(path="/getclick_browser", include_in_schema=False)
@@ -474,7 +487,10 @@ async def getclickstatsbrowserpage_post(
 
 @app.get(path="/getclick_os", include_in_schema=False)
 async def getclickstatsospage(request: Request):
-    return templates.TemplateResponse(name="stats.html", context={"request": request})
+    return templates.TemplateResponse(
+        name="stats.html",
+        context={"request": request},
+    )
 
 
 @app.post(path="/getclick_os", include_in_schema=False)
@@ -529,7 +545,10 @@ async def getclickstatsospage_post(
 
 @app.get(path="/getclick_country", include_in_schema=False)
 async def getclickstatsospage(request: Request):
-    return templates.TemplateResponse(name="stats.html", context={"request": request})
+    return templates.TemplateResponse(
+        name="stats.html",
+        context={"request": request},
+    )
 
 
 @app.post(path="/getclick_country", include_in_schema=False)
@@ -698,9 +717,13 @@ else:
 
 app.include_router(apirouter)
 register_tortoise(
-    app,
+    app=app,
     db_url=database_url,
     modules={"models": [__name__]},
     generate_schemas=True,
 )
-uvicorn.run(app=app, host="0.0.0.0", port=port)
+uvicorn.run(
+    app=app,
+    host="0.0.0.0",
+    port=port,
+)
