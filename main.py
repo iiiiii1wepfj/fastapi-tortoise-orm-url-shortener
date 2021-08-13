@@ -243,7 +243,10 @@ async def add_link(
     }
 
 
-async def get_link(slug: str, host):
+async def get_link(
+    slug: str,
+    host,
+):
     theslug = slug.lower()
     check_slug_exists = await link_exists(slug=theslug)
     if not check_slug_exists:
@@ -264,7 +267,10 @@ async def get_link(slug: str, host):
         }
 
 
-async def get_link_qr(slug: str, host):
+async def get_link_qr(
+    slug: str,
+    host,
+):
     theslug = slug.lower()
     check_slug_exists = await link_exists(slug=theslug)
     if not check_slug_exists:
@@ -284,7 +290,10 @@ async def get_link_qr(slug: str, host):
         )
 
 
-async def redirect_link(slug: str, req):
+async def redirect_link(
+    slug: str,
+    req,
+):
     check_slug_exists = await link_exists(slug=slug)
     if not check_slug_exists:
         raise HTTPException(
@@ -832,7 +841,7 @@ else:
     pass
 
 
-app.include_router(apirouter)
+app.include_router(router=apirouter)
 register_tortoise(
     app=app,
     db_url=database_url,
