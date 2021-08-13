@@ -711,6 +711,7 @@ async def add_short_url(
     request: Request,
     slug: Optional[str] = None,
 ):
+    """Create a short link."""
     thehost = request.url.hostname
     if slug:
         theslug = slug.lower()
@@ -736,6 +737,7 @@ async def get_link_info(
     slug: str,
     request: Request,
 ):
+    """Get short link info."""
     thehost = request.url.hostname
     theslug = slug.lower()
     get_link_func_res = await get_link(
@@ -753,6 +755,7 @@ async def get_link_info(
     ],
 )
 async def get_slug_click_stats(slug: str):
+    """Get the short link click statistics."""
     theslug = slug.lower()
     the_link_click_stats_get = await get_clicks_stats_by_the_slug(
         slug=theslug,
@@ -769,6 +772,7 @@ async def get_slug_click_stats(slug: str):
     response_class=fastapijsonres,
 )
 async def get_the_links_count():
+    """Get the number of the short links."""
     return {
         "count": await get_links_count(),
     }
@@ -779,6 +783,7 @@ async def redirect_to_the_url(
     slug: str,
     request: Request,
 ):
+    """Redirect from the short link to the link."""
     theslug = slug.lower()
     return await redirect_link(
         slug=theslug,
@@ -797,6 +802,7 @@ async def generate_qr_code(
     slug: str,
     request: Request,
 ):
+    """Get short link qr code."""
     thehost = request.url.hostname
     get_the_link_qr_code = await get_link_qr(
         slug=slug,
