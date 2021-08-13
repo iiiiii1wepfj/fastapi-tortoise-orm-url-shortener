@@ -83,7 +83,7 @@ app = FastAPI(
 )
 
 
-@app.on_event("startup")
+@app.on_event(event_type="startup")
 async def app_startup_actions():
     py_version = get_python_version()
     uvicorn_version = uvicorn.__version__
@@ -117,7 +117,7 @@ async def app_startup_actions():
     )
 
 
-@app.on_event("shutdown")
+@app.on_event(event_type="shutdown")
 async def app_shutdown_actions():
     await httpxhttpsession.aclose()
     logger.info(
@@ -276,7 +276,7 @@ async def redirect_link(slug: str, req):
             )
         except:
             pass
-        return RedirectResponse(check_link_db.url)
+        return RedirectResponse(url=check_link_db.url)
 
 
 async def get_clicks_stats_by_the_slug(slug: str):
@@ -307,12 +307,12 @@ async def get_links_count():
 templates = Jinja2Templates(directory="templates")
 
 
-@app.get("/", include_in_schema=False)
+@app.get(path="/", include_in_schema=False)
 async def homepage(request: Request):
-    return templates.TemplateResponse("index.html", context={"request": request})
+    return templates.TemplateResponse(name="index.html", context={"request": request})
 
 
-@app.post("/", include_in_schema=False)
+@app.post(path="/", include_in_schema=False)
 async def homepage_post(
     request: Request,
     url: str = Form(...),
@@ -337,7 +337,7 @@ async def homepage_post(
         if thetype == "HTTPException":
             result = e.detail
     return templates.TemplateResponse(
-        "results.html",
+        name="results.html",
         context={
             "request": request,
             "type": thetype,
@@ -346,7 +346,7 @@ async def homepage_post(
     )
 
 
-@app.get("/docs", include_in_schema=False)
+@app.get(path="/docs", include_in_schema=False)
 async def the_docs_swagger_url_page_web_plugin_func_swagger():
     the_openapi_url = app.openapi_url
     the_docs_title = app.title + " docs"
@@ -366,12 +366,12 @@ async def the_docs_redoc_url_page_web_plugin_func_swagger():
     )
 
 
-@app.get("/get", include_in_schema=False)
+@app.get(path="/get", include_in_schema=False)
 async def statspage(request: Request):
-    return templates.TemplateResponse("stats.html", context={"request": request})
+    return templates.TemplateResponse(name="stats.html", context={"request": request})
 
 
-@app.post("/get", include_in_schema=False)
+@app.post(path="/get", include_in_schema=False)
 async def statspage_post(
     request: Request,
     slug: str = Form(...),
@@ -391,7 +391,7 @@ async def statspage_post(
         if thetype == "HTTPException":
             result = e.detail
     return templates.TemplateResponse(
-        "results.html",
+        name="results.html",
         context={
             "request": request,
             "type": thetype,
@@ -400,12 +400,12 @@ async def statspage_post(
     )
 
 
-@app.get("/getclick_browser", include_in_schema=False)
+@app.get(path="/getclick_browser", include_in_schema=False)
 async def getclickstatsbrowserpage(request: Request):
-    return templates.TemplateResponse("stats.html", context={"request": request})
+    return templates.TemplateResponse(name="stats.html", context={"request": request})
 
 
-@app.post("/getclick_browser", include_in_schema=False)
+@app.post(path="/getclick_browser", include_in_schema=False)
 async def getclickstatsbrowserpage_post(
     request: Request,
     slug: str = Form(...),
@@ -446,7 +446,7 @@ async def getclickstatsbrowserpage_post(
         if thetype == "HTTPException":
             result = e.detail
         return templates.TemplateResponse(
-            "results.html",
+            name="results.html",
             context={
                 "request": request,
                 "type": thetype,
@@ -455,12 +455,12 @@ async def getclickstatsbrowserpage_post(
         )
 
 
-@app.get("/getclick_os", include_in_schema=False)
+@app.get(path="/getclick_os", include_in_schema=False)
 async def getclickstatsospage(request: Request):
-    return templates.TemplateResponse("stats.html", context={"request": request})
+    return templates.TemplateResponse(name="stats.html", context={"request": request})
 
 
-@app.post("/getclick_os", include_in_schema=False)
+@app.post(path="/getclick_os", include_in_schema=False)
 async def getclickstatsospage_post(
     request: Request,
     slug: str = Form(...),
@@ -501,7 +501,7 @@ async def getclickstatsospage_post(
         if thetype == "HTTPException":
             result = e.detail
         return templates.TemplateResponse(
-            "results.html",
+            name="results.html",
             context={
                 "request": request,
                 "type": thetype,
@@ -510,12 +510,12 @@ async def getclickstatsospage_post(
         )
 
 
-@app.get("/getclick_country", include_in_schema=False)
+@app.get(path="/getclick_country", include_in_schema=False)
 async def getclickstatsospage(request: Request):
-    return templates.TemplateResponse("stats.html", context={"request": request})
+    return templates.TemplateResponse(name="stats.html", context={"request": request})
 
 
-@app.post("/getclick_country", include_in_schema=False)
+@app.post(path="/getclick_country", include_in_schema=False)
 async def getclickstatsospage_post(
     request: Request,
     slug: str = Form(...),
@@ -556,7 +556,7 @@ async def getclickstatsospage_post(
         if thetype == "HTTPException":
             result = e.detail
         return templates.TemplateResponse(
-            "results.html",
+            name="results.html",
             context={
                 "request": request,
                 "type": thetype,
@@ -569,7 +569,7 @@ apirouter = APIRouter(prefix="/api")
 
 
 @apirouter.api_route(
-    "/add",
+    path="/add",
     methods=[
         "POST",
         "GET",
@@ -595,7 +595,7 @@ async def add_short_url(
 
 
 @apirouter.api_route(
-    "/get",
+    path="/get",
     methods=[
         "POST",
         "GET",
@@ -609,7 +609,7 @@ async def get_link_info(slug: str, request: Request):
     return get_link_func_res
 
 
-@apirouter.api_route("/click_stats", methods=["POST", "GET"])
+@apirouter.api_route(path="/click_stats", methods=["POST", "GET"])
 async def get_slug_click_stats(slug: str):
     theslug = slug.lower()
     the_link_click_stats_get = await get_clicks_stats_by_the_slug(slug=theslug)
@@ -617,7 +617,7 @@ async def get_slug_click_stats(slug: str):
 
 
 @apirouter.api_route(
-    "/all",
+    path="/all",
     methods=[
         "POST",
         "GET",
@@ -628,20 +628,20 @@ async def get_the_links_count():
     return {"count": await get_links_count()}
 
 
-@app.get("/{slug}")
+@app.get(path="/{slug}")
 async def redirect_to_the_url(slug: str, request: Request):
     theslug = slug.lower()
     return await redirect_link(slug=theslug, req=request)
 
 
-@app.api_route("/{slug}/qr", methods=["POST", "GET"])
+@app.api_route(path="/{slug}/qr", methods=["POST", "GET"])
 async def generate_qr_code(slug: str, request: Request):
     thehost = request.url.hostname
     get_the_link_qr_code = await get_link_qr(slug=slug, host=thehost)
     return get_the_link_qr_code
 
 
-@app.exception_handler(405)
+@app.exception_handler(exc_class_or_status_code=405)
 async def method_not_allowed_error_handle(
     request: Request,
     the_error: HTTPException,
@@ -661,7 +661,7 @@ async def method_not_allowed_error_handle(
 
 if show_server_errors:
 
-    @app.exception_handler(500)
+    @app.exception_handler(exc_class_or_status_code=500)
     async def internal_server_error(
         request: Request,
         the_error: HTTPException,
