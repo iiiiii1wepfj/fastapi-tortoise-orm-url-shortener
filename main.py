@@ -220,7 +220,10 @@ async def get_link(slug: str, host):
     theslug = slug.lower()
     check_slug_exists = await link_exists(slug=theslug)
     if not check_slug_exists:
-        raise HTTPException(status_code=404, detail="the slug is not exists")
+        raise HTTPException(
+            status_code=404,
+            detail="the slug is not exists",
+        )
     else:
         check_link_db = await Links.get(slug=theslug)
         return {
@@ -238,20 +241,29 @@ async def get_link_qr(slug: str, host):
     theslug = slug.lower()
     check_slug_exists = await link_exists(slug=theslug)
     if not check_slug_exists:
-        raise HTTPException(status_code=404, detail="the slug is not exists")
+        raise HTTPException(
+            status_code=404,
+            detail="the slug is not exists",
+        )
     else:
         thelink = f"{host}/{theslug}"
         make_qr_code = qrcode.make(thelink)
         bytes_qr_code = BytesIO()
         make_qr_code.save(bytes_qr_code)
         qr_code_result = BytesIO(bytes_qr_code.getvalue())
-        return StreamingResponse(qr_code_result, media_type="image/jpeg")
+        return StreamingResponse(
+            qr_code_result,
+            media_type="image/jpeg",
+        )
 
 
 async def redirect_link(slug: str, req):
     check_slug_exists = await link_exists(slug=slug)
     if not check_slug_exists:
-        raise HTTPException(status_code=404, detail="the slug is not exists")
+        raise HTTPException(
+            status_code=404,
+            detail="the slug is not exists",
+        )
     else:
         check_link_db = await Links.get(slug=slug)
         theviews = int(check_link_db.views) + 1
@@ -284,7 +296,10 @@ async def redirect_link(slug: str, req):
 async def get_clicks_stats_by_the_slug(slug: str):
     check_slug_exists = await link_exists(slug=slug)
     if not check_slug_exists:
-        raise HTTPException(status_code=404, detail="the slug is not exists")
+        raise HTTPException(
+            status_code=404,
+            detail="the slug is not exists",
+        )
     else:
         get_click_stats = await LinkStats.filter(slug=slug)
         browser_count = collections_items_counter(i.browser for i in get_click_stats)
