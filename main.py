@@ -25,7 +25,7 @@ except:
         JSONResponse as fastapijsonres,
     )
 
-    orjson_version = "not found"
+    orjson_version: str = "not found"
 from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import HTTPException
 from fastapi.openapi.docs import (
@@ -70,18 +70,18 @@ try:
         port,
     )
 except:
-    database_url = "sqlite://linksdb.sqlite"
-    port = 8000
+    database_url: str = "sqlite://linksdb.sqlite"
+    port: int = 8000
 import uvicorn, jinja2, pydantic
 import re, sys, os
 import qrcode, httpx, pytz
 
-app_version = "2.0"
-min_slug_len = 4
-max_slug_len = 30
-max_auto_slug_len = 10
-slug_allowed_characters = "abcdefghijklmnopqrstuvwxyz0123456789"
-show_server_errors = False
+app_version: str = "2.0"
+min_slug_len: int = 4
+max_slug_len: int = 30
+max_auto_slug_len: int = 10
+slug_allowed_characters: str = "abcdefghijklmnopqrstuvwxyz0123456789"
+show_server_errors: bool = False
 httpxhttpsession = httpx.AsyncClient()
 
 logger.add(
