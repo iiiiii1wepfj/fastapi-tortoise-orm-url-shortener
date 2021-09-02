@@ -12,6 +12,9 @@ from fastapi.responses import (
     StreamingResponse,
     HTMLResponse,
 )
+from fastapi.encoders import (
+    jsonable_encoder as fastapi_jsonable_encoder,
+)
 
 try:
     from fastapi.responses import (
@@ -34,6 +37,9 @@ from fastapi.openapi.docs import (
 )
 from starlette import (
     __version__ as starlette_version,
+)
+from starlette.responses import (
+    Response as StarletteResponseObject,
 )
 from tortoise import fields, Model
 from tortoise.contrib.fastapi import register_tortoise
@@ -75,6 +81,7 @@ except:
 import uvicorn, jinja2, pydantic
 import re, sys, os
 import qrcode, httpx, pytz
+import yaml
 
 app_version: str = "2.0"
 min_slug_len: int = 4
@@ -120,6 +127,13 @@ class LinkStats(Model):
         null=True,
     )
     time = fields.DatetimeField(auto_now_add=True)
+
+
+class YAMLResponse(
+    StarletteResponseObject,
+):
+
+    media_type: str = "application/yaml"
 
 
 app = FastAPI(
@@ -775,6 +789,27 @@ async def get_link_info(
         host=thehost,
     )
     return get_link_func_res
+
+
+@apirouter.api_route(
+    path="/click_stats_yaml",
+    methods=[
+        "POST",
+        "GET",
+    ],
+    response_class=YAMLResponse,
+)
+async def get_slug_click_stats_yaml(slug: str):
+    """Get the short link click statistics in yaml format."""
+    theslug = slug.lower()
+    the_link_click_stats_get_one = await get_clicks_stats_by_the_slug(
+        slug=theslug,
+    )
+    the_link_click_stats_get_one_json = fastapi_jsonable_encoder(
+        the_link_click_stats_get_one
+    )
+    the_link_click_stats_get_yaml = yaml.dump(the_link_click_stats_get_one_json)
+    return the_link_click_stats_get_yaml
 
 
 @apirouter.api_route(
