@@ -89,6 +89,13 @@ max_slug_len: int = 30
 max_auto_slug_len: int = 10
 slug_allowed_characters: str = "abcdefghijklmnopqrstuvwxyz0123456789"
 show_server_errors: bool = False
+invalid_slugs_list: list = [
+    "docs",
+    "redoc",
+    "getclick_browser",
+    "getclick_os",
+    "getclick_country",
+]
 httpxhttpsession = httpx.AsyncClient()
 
 logger.add(
@@ -191,6 +198,14 @@ async def link_exists(slug: str):
     return await Links.exists(slug=slug)
 
 
+def check_if_slug_is_invalid_from_invalid_list(slug: str):
+    the_slug = slug.lower()
+    if the_slug in invalid_slugs_list:
+        return False
+    else:
+        return True
+
+
 def gen_url_slug():
     the_slug_length = randint(
         min_slug_len,
@@ -204,7 +219,8 @@ async def gen_valid_url_slug():
     while True:
         slug = gen_url_slug()
         check_slug = await link_exists(slug=slug)
-        if not check_slug:
+        check_slug_from_list = check_if_slug_is_invalid_from_invalid_list(slug=slug)
+        if (not check_slug) or (not check_if_slug_is_invalid):
             break
     return slug
 
@@ -270,6 +286,10 @@ async def add_link(
 ):
     theslug = slug or await gen_valid_url_slug()
     theslug = theslug.lower()
+    checkslugvalidlist = check_if_slug_is_invalid_from_invalid_list(slug=slug)
+    if not checkslugvalidlist:
+        theslug = await gen_valid_url_slug()
+        theslug = theslug.lower()
     await check_if_valid_slug(slug=theslug)
     theurl = url if re.match(r"^https?://", url) else "http://" + url
     await Links.create(
