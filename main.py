@@ -418,8 +418,7 @@ async def get_clicks_stats_by_the_slug(slug: str):
 
 
 async def get_links_count():
-    get_all_links = await Links.all()
-    get_all_links_count = get_all_links.count()
+    get_all_links_count = await Links.all().count()
     return get_all_links_count
 
 
