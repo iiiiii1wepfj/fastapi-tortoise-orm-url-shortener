@@ -286,7 +286,7 @@ async def add_link(
 ):
     theslug = slug or await gen_valid_url_slug()
     theslug = theslug.lower()
-    checkslugvalidlist = check_if_slug_is_invalid_from_invalid_list(slug=slug)
+    checkslugvalidlist = check_if_slug_is_invalid_from_invalid_list(slug=theslug)
     if not checkslugvalidlist:
         theslug = await gen_valid_url_slug()
         theslug = theslug.lower()
