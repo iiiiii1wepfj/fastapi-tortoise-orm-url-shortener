@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request, Form, APIRouter
 from fastapi.responses import RedirectResponse, StreamingResponse, HTMLResponse
 from fastapi.encoders import jsonable_encoder
+
 try:
     from fastapi.responses import ORJSONResponse as fastapijsonres
 except:
@@ -20,6 +21,7 @@ from user_agents import parse as parse_user_agent
 from collections import Counter
 from plotly import graph_objects, io as plotlyio
 from contextlib import asynccontextmanager
+
 try:
     from config import database_url, port
 except:
@@ -33,7 +35,13 @@ max_slug_len: int = 30
 max_auto_slug_len: int = 10
 slug_allowed_characters: str = "abcdefghijklmnopqrstuvwxyz0123456789"
 show_server_errors: bool = False
-invalid_slugs_list: list = ["docs", "redoc", "getclick_browser", "getclick_os", "getclick_country"]
+invalid_slugs_list: list = [
+    "docs",
+    "redoc",
+    "getclick_browser",
+    "getclick_os",
+    "getclick_country",
+]
 httpxhttpsession = httpx.AsyncClient()
 
 logger.add(
@@ -53,7 +61,9 @@ class Links(Model):
 
 
 class LinkStats(Model):
-    slug: fields.ForeignKeyRelation[Links] = fields.ForeignKeyField("models.Links", related_name="stats", pk=True)
+    slug: fields.ForeignKeyRelation[Links] = fields.ForeignKeyField(
+        "models.Links", related_name="stats", pk=True
+    )
     browser = fields.TextField()
     os = fields.TextField()
     country = fields.TextField(default="None", null=True)
@@ -117,7 +127,9 @@ async def get_the_client_ip(therequest):
 
 async def get_geoip(ip):
     try:
-        get_the_ip_location = await httpxhttpsession.get(url=f"https://api.country.is/{ip}")
+        get_the_ip_location = await httpxhttpsession.get(
+            url=f"https://api.country.is/{ip}"
+        )
     except:
         return "None"
     if not get_the_ip_location.is_error:
@@ -141,9 +153,15 @@ async def check_if_valid_slug(slug: str):
     check_if_slug_exists = await link_exists(slug=theslug)
     for i in theslug:
         if i not in slug_allowed_characters:
-            raise HTTPException(status_code=400, detail=f"invalid slug {theslug}: the slug must contain only english letters and digits")
+            raise HTTPException(
+                status_code=400,
+                detail=f"invalid slug {theslug}: the slug must contain only english letters and digits",
+            )
     if len(theslug) < min_slug_len or len(theslug) > max_slug_len:
-        raise HTTPException(status_code=400, detail=f"invalid slug {theslug}: the slug length must be betwen {min_slug_len}-{max_slug_len} characters")
+        raise HTTPException(
+            status_code=400,
+            detail=f"invalid slug {theslug}: the slug length must be betwen {min_slug_len}-{max_slug_len} characters",
+        )
     elif check_if_slug_exists:
         raise HTTPException(status_code=409, detail="the slug already exists")
     else:
@@ -282,7 +300,9 @@ async def homepage(request: Request):
 
 
 @app.post(path="/", include_in_schema=False)
-async def homepage_post(request: Request, url: str = Form(...), slug: Optional[str] = Form(None)):
+async def homepage_post(
+    request: Request, url: str = Form(...), slug: Optional[str] = Form(None)
+):
     thehost = request.url.hostname
     if slug:
         theslug = slug.lower()
@@ -541,7 +561,9 @@ async def getclickstatsospage_post(request: Request, slug: str = Form(...)):
 apirouter = APIRouter(prefix="/api")
 
 
-@apirouter.api_route(path="/add", methods=["POST", "GET"], response_class=fastapijsonres)
+@apirouter.api_route(
+    path="/add", methods=["POST", "GET"], response_class=fastapijsonres
+)
 async def add_short_url(url: str, request: Request, slug: Optional[str] = None):
     """Create a short link."""
     thehost = request.url.hostname
@@ -553,7 +575,9 @@ async def add_short_url(url: str, request: Request, slug: Optional[str] = None):
     return add_link_func_res
 
 
-@apirouter.api_route(path="/get", methods=["POST", "GET"],response_class=fastapijsonres)
+@apirouter.api_route(
+    path="/get", methods=["POST", "GET"], response_class=fastapijsonres
+)
 async def get_link_info(slug: str, request: Request):
     """Get short link info."""
     thehost = request.url.hostname
@@ -562,7 +586,9 @@ async def get_link_info(slug: str, request: Request):
     return get_link_func_res
 
 
-@apirouter.api_route(path="/click_stats_yaml", methods=["POST", "GET"] ,response_class=YAMLResponse)
+@apirouter.api_route(
+    path="/click_stats_yaml", methods=["POST", "GET"], response_class=YAMLResponse
+)
 async def get_slug_click_stats_yaml(slug: str):
     """Get the short link click statistics in yaml format."""
     theslug = slug.lower()
@@ -580,7 +606,9 @@ async def get_slug_click_stats(slug: str):
     return the_link_click_stats_get
 
 
-@apirouter.api_route(path="/all", methods=["POST","GET"], response_class=fastapijsonres)
+@apirouter.api_route(
+    path="/all", methods=["POST", "GET"], response_class=fastapijsonres
+)
 async def get_the_links_count():
     """Get the number of the short links."""
     return {"count": await get_links_count()}
@@ -604,7 +632,9 @@ async def generate_qr_code(slug: str, request: Request):
 @app.exception_handler(exc_class_or_status_code=405)
 async def method_not_allowed_error_handle(request: Request, the_error: HTTPException):
     request_http_method = request.method
-    request_full_url = f"{request.url.scheme}://{request.url.hostname}{request.url.path}"
+    request_full_url = (
+        f"{request.url.scheme}://{request.url.hostname}{request.url.path}"
+    )
     return fastapijsonres(
         status_code=405,
         content={
@@ -615,6 +645,7 @@ async def method_not_allowed_error_handle(request: Request, the_error: HTTPExcep
 
 
 if show_server_errors:
+
     @app.exception_handler(exc_class_or_status_code=500)
     async def internal_server_error(request: Request, the_error: HTTPException):
         return fastapijsonres(
