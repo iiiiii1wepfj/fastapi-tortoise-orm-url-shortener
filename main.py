@@ -19,6 +19,7 @@ from io import BytesIO
 from user_agents import parse as parse_user_agent
 from collections import Counter
 from plotly import graph_objects, io as plotlyio
+from contextlib import asynccontextmanager
 try:
     from config import database_url, port
 except:
@@ -64,20 +65,21 @@ class YAMLResponse(StarletteResponseObject):
     media_type: str = "application/yaml"
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    await httpxhttpsession.aclose()
+    logger.info("app stopped, bye.")
+
+
 app = FastAPI(
     docs_url=None,
     redoc_url=None,
     title="url shortener",
     description='the source code: <a href="https://github.com/iiiiii1wepfj/fastapi-tortoise-orm-url-shortener">https://github.com/iiiiii1wepfj/fastapi-tortoise-orm-url-shortener</a>, for donations: <a href="https://paypal.me/itayki">https://paypal.me/itayki</a>.',
     version=app_version,
+    lifespan=lifespan,
 )
-
-
-
-@app.on_event(event_type="shutdown")
-async def app_shutdown_actions():
-    await httpxhttpsession.aclose()
-    logger.info("app stopped, bye.")
 
 
 async def link_exists(slug: str):
