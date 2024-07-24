@@ -157,7 +157,7 @@ async def add_link(url: str, host, slug: Optional[str] = None):
         theslug = theslug.lower()
     await check_if_valid_slug(slug=theslug)
     theurl = url if re.match(r"^https?://", url) else "http://" + url
-    is_valid_address(url)
+    is_valid_address(theurl)
     await Links.create(slug=theslug, url=theurl, views=0)
     return {
         "slug": theslug,
