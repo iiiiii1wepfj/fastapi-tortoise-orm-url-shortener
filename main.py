@@ -1,87 +1,33 @@
-from fastapi import (
-    FastAPI,
-    Request,
-    Form,
-    APIRouter,
-)
-from fastapi import (
-    __version__ as fastapi_version,
-)
-from fastapi.responses import (
-    RedirectResponse,
-    StreamingResponse,
-    HTMLResponse,
-)
-from fastapi.encoders import (
-    jsonable_encoder as fastapi_jsonable_encoder,
-)
+from fastapi import FastAPI, Request, Form, APIRouter
+from fastapi.responses import RedirectResponse, StreamingResponse, HTMLResponse
+from fastapi.encoders import jsonable_encoder
 
 try:
-    from fastapi.responses import (
-        ORJSONResponse as fastapijsonres,
-    )
-    from orjson import (
-        __version__ as orjson_version,
-    )
+    from fastapi.responses import ORJSONResponse as fastapijsonres
 except:
-    from fastapi.responses import (
-        JSONResponse as fastapijsonres,
-    )
-
-    orjson_version: str = "not found"
+    from fastapi.responses import JSONResponse as fastapijsonres
 from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import HTTPException
-from fastapi.openapi.docs import (
-    get_swagger_ui_html,
-    get_redoc_html,
-)
-from starlette import (
-    __version__ as starlette_version,
-)
-from starlette.responses import (
-    Response as StarletteResponseObject,
-)
+from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
+from starlette.responses import Response as StarletteResponseObject
 from tortoise import fields, Model
 from tortoise.contrib.fastapi import register_tortoise
-from tortoise import (
-    __version__ as tortoise_version,
-)
 from typing import Optional
 from secrets import choice
 from random import randint
 from loguru import logger
-from loguru import (
-    __version__ as loguru_version,
-)
 from io import BytesIO
-from platform import (
-    python_version as get_python_version,
-)
-from user_agents import (
-    parse as parse_user_agent,
-)
-from pkg_resources import get_distribution
-from collections import (
-    Counter as collections_items_counter,
-)
-from plotly import (
-    graph_objects as plotlygraph_objects,
-    io as plotlyio,
-    __version__ as plotly_version,
-)
+from user_agents import parse as parse_user_agent
+from collections import Counter
+from plotly import graph_objects, io as plotlyio
+from contextlib import asynccontextmanager
 
 try:
-    from config import (
-        database_url,
-        port,
-    )
+    from config import database_url, port
 except:
     database_url: str = "sqlite://linksdb.sqlite"
     port: int = 8000
-import uvicorn, jinja2, pydantic
-import re, sys, os
-import qrcode, httpx, pytz
-import yaml
+import uvicorn, jinja2, pydantic, re, sys, os, qrcode, httpx, pytz, yaml, validators, ipaddress
 
 app_version: str = "2.0"
 min_slug_len: int = 4
@@ -106,10 +52,7 @@ logger.add(
 
 
 class Links(Model):
-    slug = fields.CharField(
-        max_length=max_slug_len,
-        pk=True,
-    )
+    slug = fields.CharField(max_length=max_slug_len, pk=True)
     url = fields.TextField()
     views = fields.IntField()
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -119,28 +62,24 @@ class Links(Model):
 
 class LinkStats(Model):
     slug: fields.ForeignKeyRelation[Links] = fields.ForeignKeyField(
-        "models.Links",
-        related_name="stats",
-        pk=True,
+        "models.Links", related_name="stats", pk=True
     )
     browser = fields.TextField()
     os = fields.TextField()
-    country = fields.TextField(
-        default="None",
-        null=True,
-    )
-    ref = fields.TextField(
-        default="None",
-        null=True,
-    )
+    country = fields.TextField(default="None", null=True)
+    ref = fields.TextField(default="None", null=True)
     time = fields.DatetimeField(auto_now_add=True)
 
 
-class YAMLResponse(
-    StarletteResponseObject,
-):
-
+class YAMLResponse(StarletteResponseObject):
     media_type: str = "application/yaml"
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    await httpxhttpsession.aclose()
+    logger.info("app stopped, bye.")
 
 
 app = FastAPI(
@@ -149,49 +88,8 @@ app = FastAPI(
     title="url shortener",
     description='the source code: <a href="https://github.com/iiiiii1wepfj/fastapi-tortoise-orm-url-shortener">https://github.com/iiiiii1wepfj/fastapi-tortoise-orm-url-shortener</a>, for donations: <a href="https://paypal.me/itayki">https://paypal.me/itayki</a>.',
     version=app_version,
+    lifespan=lifespan,
 )
-
-
-@app.on_event(event_type="startup")
-async def app_startup_actions():
-    py_version = get_python_version()
-    uvicorn_version = uvicorn.__version__
-    jinja2_version = jinja2.__version__
-    pydantic_version_one = pydantic.version
-    pydantic_version = pydantic_version_one.VERSION
-    re_version = re.__version__
-    qr_code_lib_version_one = get_distribution("qrcode")
-    qr_code_lib_version = qr_code_lib_version_one.version
-    httpx_version = httpx.__version__
-    pytz_version = pytz.__version__
-    app_pid = os.getpid()
-    logger.info(
-        "app started.\n"
-        f"python version: {py_version},\n"
-        f"app version: {app_version},\n"
-        f"tortoise-orm version: {tortoise_version},\n"
-        f"fastapi version: {fastapi_version},\n"
-        f"starlette version: {starlette_version},\n"
-        f"uvicorn version: {uvicorn_version},\n"
-        f"jinja2 version: {jinja2_version},\n"
-        f"orjson version: {orjson_version},\n"
-        f"pydantic version: {pydantic_version},\n"
-        f"re version: {re_version},\n"
-        f"qrcode version: {qr_code_lib_version},\n"
-        f"loguru version: {loguru_version},\n"
-        f"plotly version: {plotly_version},\n"
-        f"httpx version: {httpx_version},\n"
-        f"pytz version: {pytz_version},\n"
-        f"app pid: {app_pid}."
-    )
-
-
-@app.on_event(event_type="shutdown")
-async def app_shutdown_actions():
-    await httpxhttpsession.aclose()
-    logger.info(
-        "app stopped, bye.",
-    )
 
 
 async def link_exists(slug: str):
@@ -200,17 +98,11 @@ async def link_exists(slug: str):
 
 def check_if_slug_is_invalid_from_invalid_list(slug: str):
     the_slug = slug.lower()
-    if the_slug in invalid_slugs_list:
-        return False
-    else:
-        return True
+    return not the_slug in invalid_slugs_list
 
 
 def gen_url_slug():
-    the_slug_length = randint(
-        min_slug_len,
-        max_auto_slug_len,
-    )
+    the_slug_length = randint(min_slug_len, max_auto_slug_len)
     slug = "".join(choice(slug_allowed_characters) for i in range(the_slug_length))
     return slug
 
@@ -263,27 +155,20 @@ async def check_if_valid_slug(slug: str):
         if i not in slug_allowed_characters:
             raise HTTPException(
                 status_code=400,
-                detail=f"invalid slug {theslug}: the slug must to be english letters or number or both",
+                detail=f"invalid slug {theslug}: the slug must contain only english letters and digits",
             )
     if len(theslug) < min_slug_len or len(theslug) > max_slug_len:
         raise HTTPException(
             status_code=400,
-            detail=f"invalid slug {theslug}: the slug length must to be {min_slug_len}-{max_slug_len}",
+            detail=f"invalid slug {theslug}: the slug length must be betwen {min_slug_len}-{max_slug_len} characters",
         )
     elif check_if_slug_exists:
-        raise HTTPException(
-            status_code=409,
-            detail="the slug is already exists",
-        )
+        raise HTTPException(status_code=409, detail="the slug already exists")
     else:
         return True
 
 
-async def add_link(
-    url: str,
-    host,
-    slug: Optional[str] = None,
-):
+async def add_link(url: str, host, slug: Optional[str] = None):
     theslug = slug or await gen_valid_url_slug()
     theslug = theslug.lower()
     checkslugvalidlist = check_if_slug_is_invalid_from_invalid_list(slug=theslug)
@@ -292,11 +177,8 @@ async def add_link(
         theslug = theslug.lower()
     await check_if_valid_slug(slug=theslug)
     theurl = url if re.match(r"^https?://", url) else "http://" + url
-    await Links.create(
-        slug=theslug,
-        url=theurl,
-        views=0,
-    )
+    is_valid_address(theurl)
+    await Links.create(slug=theslug, url=theurl, views=0)
     return {
         "slug": theslug,
         "url": theurl,
@@ -305,17 +187,11 @@ async def add_link(
     }
 
 
-async def get_link(
-    slug: str,
-    host,
-):
+async def get_link(slug: str, host):
     theslug = slug.lower()
     check_slug_exists = await link_exists(slug=theslug)
     if not check_slug_exists:
-        raise HTTPException(
-            status_code=404,
-            detail="the slug is not exists",
-        )
+        raise HTTPException(status_code=404, detail="the slug does not exists")
     else:
         check_link_db = await Links.get(slug=theslug)
         return {
@@ -329,39 +205,24 @@ async def get_link(
         }
 
 
-async def get_link_qr(
-    slug: str,
-    host,
-):
+async def get_link_qr(slug: str, host):
     theslug = slug.lower()
     check_slug_exists = await link_exists(slug=theslug)
     if not check_slug_exists:
-        raise HTTPException(
-            status_code=404,
-            detail="the slug is not exists",
-        )
+        raise HTTPException(status_code=404, detail="the slug does not exists")
     else:
         thelink = f"{host}/{theslug}"
         make_qr_code = qrcode.make(thelink)
         bytes_qr_code = BytesIO()
         make_qr_code.save(bytes_qr_code)
         qr_code_result = BytesIO(bytes_qr_code.getvalue())
-        return StreamingResponse(
-            qr_code_result,
-            media_type="image/jpeg",
-        )
+        return StreamingResponse(qr_code_result, media_type="image/jpeg")
 
 
-async def redirect_link(
-    slug: str,
-    req,
-):
+async def redirect_link(slug: str, req):
     check_slug_exists = await link_exists(slug=slug)
     if not check_slug_exists:
-        raise HTTPException(
-            status_code=404,
-            detail="the slug is not exists",
-        )
+        raise HTTPException(status_code=404, detail="the slug does not exists")
     else:
         check_link_db = await Links.get(slug=slug)
         theviews = int(check_link_db.views) + 1
@@ -375,12 +236,8 @@ async def redirect_link(
             else:
                 req_ref = "None"
             try:
-                get_the_client_ip_for_geoip = await get_the_client_ip(
-                    therequest=req,
-                )
-                request_geoip_res = await get_geoip(
-                    ip=get_the_client_ip_for_geoip,
-                )
+                get_the_client_ip_for_geoip = await get_the_client_ip(therequest=req)
+                request_geoip_res = await get_geoip(ip=get_the_client_ip_for_geoip)
             except:
                 request_geoip_res = "None"
             await LinkStats.create(
@@ -398,16 +255,13 @@ async def redirect_link(
 async def get_clicks_stats_by_the_slug(slug: str):
     check_slug_exists = await link_exists(slug=slug)
     if not check_slug_exists:
-        raise HTTPException(
-            status_code=404,
-            detail="the slug is not exists",
-        )
+        raise HTTPException(status_code=404, detail="the slug does not exists")
     else:
         get_click_stats = await LinkStats.filter(slug=slug)
-        browser_count = collections_items_counter(i.browser for i in get_click_stats)
-        os_count = collections_items_counter(i.os for i in get_click_stats)
-        countries_count = collections_items_counter(i.country for i in get_click_stats)
-        ref_count = collections_items_counter(i.ref for i in get_click_stats)
+        browser_count = Counter(i.browser for i in get_click_stats)
+        os_count = Counter(i.os for i in get_click_stats)
+        countries_count = Counter(i.country for i in get_click_stats)
+        ref_count = Counter(i.ref for i in get_click_stats)
         all_count_stats = {
             "browsers": browser_count,
             "operating_systems": os_count,
@@ -420,6 +274,16 @@ async def get_clicks_stats_by_the_slug(slug: str):
 async def get_links_count():
     get_all_links_count = await Links.all().count()
     return get_all_links_count
+
+
+def is_valid_address(address):
+    if validators.url(address):
+        return True
+    try:
+        ipaddress.IPv4Address(address)
+        return True
+    except ipaddress.AddressValueError:
+        raise HTTPException(status_code=400, detail=f"invalid address")
 
 
 templates = Jinja2Templates(directory="templates")
@@ -435,14 +299,9 @@ async def homepage(request: Request):
     )
 
 
-@app.post(
-    path="/",
-    include_in_schema=False,
-)
+@app.post(path="/", include_in_schema=False)
 async def homepage_post(
-    request: Request,
-    url: str = Form(...),
-    slug: Optional[str] = Form(None),
+    request: Request, url: str = Form(...), slug: Optional[str] = Form(None)
 ):
     thehost = request.url.hostname
     if slug:
@@ -472,36 +331,21 @@ async def homepage_post(
     )
 
 
-@app.get(
-    path="/docs",
-    include_in_schema=False,
-)
+@app.get(path="/docs", include_in_schema=False)
 async def the_docs_swagger_url_page_web_plugin_func_swagger():
     the_openapi_url = app.openapi_url
     the_docs_title = app.title + " docs"
-    return get_swagger_ui_html(
-        openapi_url=the_openapi_url,
-        title=the_docs_title,
-    )
+    return get_swagger_ui_html(openapi_url=the_openapi_url, title=the_docs_title)
 
 
-@app.get(
-    path="/redoc",
-    include_in_schema=False,
-)
+@app.get(path="/redoc", include_in_schema=False)
 async def the_docs_redoc_url_page_web_plugin_func_swagger():
     the_openapi_url = app.openapi_url
     the_docs_title = app.title + " docs"
-    return get_redoc_html(
-        openapi_url=the_openapi_url,
-        title=the_docs_title,
-    )
+    return get_redoc_html(openapi_url=the_openapi_url, title=the_docs_title)
 
 
-@app.get(
-    path="/get",
-    include_in_schema=False,
-)
+@app.get(path="/get", include_in_schema=False)
 async def statspage(request: Request):
     return templates.TemplateResponse(
         name="stats.html",
@@ -511,23 +355,14 @@ async def statspage(request: Request):
     )
 
 
-@app.post(
-    path="/get",
-    include_in_schema=False,
-)
-async def statspage_post(
-    request: Request,
-    slug: str = Form(...),
-):
+@app.post(path="/get", include_in_schema=False)
+async def statspage_post(request: Request, slug: str = Form(...)):
     thehost = request.url.hostname
     if slug:
         theslug = slug.lower()
     else:
         theslug = None
-    get_the_link = await get_link(
-        slug=theslug,
-        host=thehost,
-    )
+    get_the_link = await get_link(slug=theslug, host=thehost)
     try:
         result = f"\nviews: {get_the_link['views']}, created at: {get_the_link['created_at']}, last time changed at: {get_the_link['last_change_at']}, qr code: {get_the_link['qr_code']}"
         thetype = f"the stats for the url {get_the_link['link']}"
@@ -546,10 +381,7 @@ async def statspage_post(
     )
 
 
-@app.get(
-    path="/getclick_browser",
-    include_in_schema=False,
-)
+@app.get(path="/getclick_browser", include_in_schema=False)
 async def getclickstatsbrowserpage(request: Request):
     return templates.TemplateResponse(
         name="stats.html",
@@ -559,106 +391,26 @@ async def getclickstatsbrowserpage(request: Request):
     )
 
 
-@app.post(
-    path="/getclick_browser",
-    include_in_schema=False,
-)
-async def getclickstatsbrowserpage_post(
-    request: Request,
-    slug: str = Form(...),
-):
+@app.post(path="/getclick_browser", include_in_schema=False)
+async def getclickstatsbrowserpage_post(request: Request, slug: str = Form(...)):
     if slug:
         theslug = slug.lower()
     else:
         theslug = None
     try:
-        the_link_click_stats_get = await get_clicks_stats_by_the_slug(
-            slug=theslug,
-        )
+        the_link_click_stats_get = await get_clicks_stats_by_the_slug(slug=theslug)
         reqjsonbrowsers = the_link_click_stats_get["browsers"]
         x = list(reqjsonbrowsers.keys())
         y = list(reqjsonbrowsers.values())
 
-        thegraph_one = plotlygraph_objects.Figure(
+        thegraph_one = graph_objects.Figure(
             data=[
-                plotlygraph_objects.Bar(
+                graph_objects.Bar(
                     x=x,
                     y=y,
                     text=x,
                     textposition="auto",
-                    marker=plotlygraph_objects.bar.Marker(
-                        color=list(range(len(x))), colorscale="Viridis"
-                    ),
-                )
-            ]
-        )
-        htmlgraph = plotlyio.to_html(
-            thegraph_one,
-            config={
-                "displayModeBar": False,
-            },
-            default_width="50%",
-            default_height="50%",
-        )
-        return HTMLResponse(
-            content=htmlgraph,
-        )
-    except Exception as e:
-        result = e
-        thetype = type(e).__name__
-        if thetype == "HTTPException":
-            result = e.detail
-        return templates.TemplateResponse(
-            name="results.html",
-            context={
-                "request": request,
-                "type": thetype,
-                "result": result,
-            },
-        )
-
-
-@app.get(
-    path="/getclick_os",
-    include_in_schema=False,
-)
-async def getclickstatsospage(request: Request):
-    return templates.TemplateResponse(
-        name="stats.html",
-        context={
-            "request": request,
-        },
-    )
-
-
-@app.post(
-    path="/getclick_os",
-    include_in_schema=False,
-)
-async def getclickstatsospage_post(
-    request: Request,
-    slug: str = Form(...),
-):
-    if slug:
-        theslug = slug.lower()
-    else:
-        theslug = None
-    try:
-        the_link_click_stats_get = await get_clicks_stats_by_the_slug(
-            slug=theslug,
-        )
-        reqjsonos = the_link_click_stats_get["operating_systems"]
-        x = list(reqjsonos.keys())
-        y = list(reqjsonos.values())
-
-        thegraph_one = plotlygraph_objects.Figure(
-            data=[
-                plotlygraph_objects.Bar(
-                    x=x,
-                    y=y,
-                    text=x,
-                    textposition="auto",
-                    marker=plotlygraph_objects.bar.Marker(
+                    marker=graph_objects.bar.Marker(
                         color=list(range(len(x))), colorscale="Viridis"
                     ),
                 )
@@ -688,10 +440,7 @@ async def getclickstatsospage_post(
         )
 
 
-@app.get(
-    path="/getclick_country",
-    include_in_schema=False,
-)
+@app.get(path="/getclick_os", include_in_schema=False)
 async def getclickstatsospage(request: Request):
     return templates.TemplateResponse(
         name="stats.html",
@@ -701,34 +450,85 @@ async def getclickstatsospage(request: Request):
     )
 
 
-@app.post(
-    path="/getclick_country",
-    include_in_schema=False,
-)
-async def getclickstatsospage_post(
-    request: Request,
-    slug: str = Form(...),
-):
+@app.post(path="/getclick_os", include_in_schema=False)
+async def getclickstatsospage_post(request: Request, slug: str = Form(...)):
     if slug:
         theslug = slug.lower()
     else:
         theslug = None
     try:
-        the_link_click_stats_get = await get_clicks_stats_by_the_slug(
-            slug=theslug,
-        )
-        reqjsonos = the_link_click_stats_get["countries"]
+        the_link_click_stats_get = await get_clicks_stats_by_the_slug(slug=theslug)
+        reqjsonos = the_link_click_stats_get["operating_systems"]
         x = list(reqjsonos.keys())
         y = list(reqjsonos.values())
 
-        thegraph_one = plotlygraph_objects.Figure(
+        thegraph_one = graph_objects.Figure(
             data=[
-                plotlygraph_objects.Bar(
+                graph_objects.Bar(
                     x=x,
                     y=y,
                     text=x,
                     textposition="auto",
-                    marker=plotlygraph_objects.bar.Marker(
+                    marker=graph_objects.bar.Marker(
+                        color=list(range(len(x))), colorscale="Viridis"
+                    ),
+                )
+            ]
+        )
+        htmlgraph = plotlyio.to_html(
+            thegraph_one,
+            config={
+                "displayModeBar": False,
+            },
+            default_width="50%",
+            default_height="50%",
+        )
+        return HTMLResponse(content=htmlgraph)
+    except Exception as e:
+        result = e
+        thetype = type(e).__name__
+        if thetype == "HTTPException":
+            result = e.detail
+        return templates.TemplateResponse(
+            name="results.html",
+            context={
+                "request": request,
+                "type": thetype,
+                "result": result,
+            },
+        )
+
+
+@app.get(path="/getclick_country", include_in_schema=False)
+async def getclickstatsospage(request: Request):
+    return templates.TemplateResponse(
+        name="stats.html",
+        context={
+            "request": request,
+        },
+    )
+
+
+@app.post(path="/getclick_country", include_in_schema=False)
+async def getclickstatsospage_post(request: Request, slug: str = Form(...)):
+    if slug:
+        theslug = slug.lower()
+    else:
+        theslug = None
+    try:
+        the_link_click_stats_get = await get_clicks_stats_by_the_slug(slug=theslug)
+        reqjsonos = the_link_click_stats_get["countries"]
+        x = list(reqjsonos.keys())
+        y = list(reqjsonos.values())
+
+        thegraph_one = graph_objects.Figure(
+            data=[
+                graph_objects.Bar(
+                    x=x,
+                    y=y,
+                    text=x,
+                    textposition="auto",
+                    marker=graph_objects.bar.Marker(
                         color=list(range(len(x))), colorscale="Viridis"
                     ),
                 )
@@ -762,146 +562,75 @@ apirouter = APIRouter(prefix="/api")
 
 
 @apirouter.api_route(
-    path="/add",
-    methods=[
-        "POST",
-        "GET",
-    ],
-    response_class=fastapijsonres,
+    path="/add", methods=["POST", "GET"], response_class=fastapijsonres
 )
-async def add_short_url(
-    url: str,
-    request: Request,
-    slug: Optional[str] = None,
-):
+async def add_short_url(url: str, request: Request, slug: Optional[str] = None):
     """Create a short link."""
     thehost = request.url.hostname
     if slug:
         theslug = slug.lower()
     else:
         theslug = None
-    add_link_func_res = await add_link(
-        url=url,
-        slug=theslug,
-        host=thehost,
-    )
+    add_link_func_res = await add_link(url=url, slug=theslug, host=thehost)
     return add_link_func_res
 
 
 @apirouter.api_route(
-    path="/get",
-    methods=[
-        "POST",
-        "GET",
-    ],
-    response_class=fastapijsonres,
+    path="/get", methods=["POST", "GET"], response_class=fastapijsonres
 )
-async def get_link_info(
-    slug: str,
-    request: Request,
-):
+async def get_link_info(slug: str, request: Request):
     """Get short link info."""
     thehost = request.url.hostname
     theslug = slug.lower()
-    get_link_func_res = await get_link(
-        slug=theslug,
-        host=thehost,
-    )
+    get_link_func_res = await get_link(slug=theslug, host=thehost)
     return get_link_func_res
 
 
 @apirouter.api_route(
-    path="/click_stats_yaml",
-    methods=[
-        "POST",
-        "GET",
-    ],
-    response_class=YAMLResponse,
+    path="/click_stats_yaml", methods=["POST", "GET"], response_class=YAMLResponse
 )
 async def get_slug_click_stats_yaml(slug: str):
     """Get the short link click statistics in yaml format."""
     theslug = slug.lower()
-    the_link_click_stats_get_one = await get_clicks_stats_by_the_slug(
-        slug=theslug,
-    )
-    the_link_click_stats_get_one_json = fastapi_jsonable_encoder(
-        the_link_click_stats_get_one
-    )
+    the_link_click_stats_get_one = await get_clicks_stats_by_the_slug(slug=theslug)
+    the_link_click_stats_get_one_json = jsonable_encoder(the_link_click_stats_get_one)
     the_link_click_stats_get_yaml = yaml.dump(the_link_click_stats_get_one_json)
     return the_link_click_stats_get_yaml
 
 
-@apirouter.api_route(
-    path="/click_stats",
-    methods=[
-        "POST",
-        "GET",
-    ],
-)
+@apirouter.api_route(path="/click_stats", methods=["POST", "GET"])
 async def get_slug_click_stats(slug: str):
     """Get the short link click statistics."""
     theslug = slug.lower()
-    the_link_click_stats_get = await get_clicks_stats_by_the_slug(
-        slug=theslug,
-    )
+    the_link_click_stats_get = await get_clicks_stats_by_the_slug(slug=theslug)
     return the_link_click_stats_get
 
 
 @apirouter.api_route(
-    path="/all",
-    methods=[
-        "POST",
-        "GET",
-    ],
-    response_class=fastapijsonres,
+    path="/all", methods=["POST", "GET"], response_class=fastapijsonres
 )
 async def get_the_links_count():
     """Get the number of the short links."""
-    return {
-        "count": await get_links_count(),
-    }
+    return {"count": await get_links_count()}
 
 
 @app.get(path="/{slug}")
-async def redirect_to_the_url(
-    slug: str,
-    request: Request,
-):
+async def redirect_to_the_url(slug: str, request: Request):
     """Redirect from the short link to the link."""
     theslug = slug.lower()
-    return await redirect_link(
-        slug=theslug,
-        req=request,
-    )
+    return await redirect_link(slug=theslug, req=request)
 
 
-@app.api_route(
-    path="/{slug}/qr",
-    methods=[
-        "POST",
-        "GET",
-    ],
-)
-async def generate_qr_code(
-    slug: str,
-    request: Request,
-):
-    """Get short link qr code."""
+@app.api_route(path="/{slug}/qr", methods=["POST", "GET"])
+async def generate_qr_code(slug: str, request: Request):
+    """Get the short link qr code."""
     thehost = request.url.hostname
-    get_the_link_qr_code = await get_link_qr(
-        slug=slug,
-        host=thehost,
-    )
+    get_the_link_qr_code = await get_link_qr(slug=slug, host=thehost)
     return get_the_link_qr_code
 
 
-@app.exception_handler(
-    exc_class_or_status_code=405,
-)
-async def method_not_allowed_error_handle(
-    request: Request,
-    the_error: HTTPException,
-):
+@app.exception_handler(exc_class_or_status_code=405)
+async def method_not_allowed_error_handle(request: Request, the_error: HTTPException):
     request_http_method = request.method
     request_full_url = (
         f"{request.url.scheme}://{request.url.hostname}{request.url.path}"
@@ -917,13 +646,8 @@ async def method_not_allowed_error_handle(
 
 if show_server_errors:
 
-    @app.exception_handler(
-        exc_class_or_status_code=500,
-    )
-    async def internal_server_error(
-        request: Request,
-        the_error: HTTPException,
-    ):
+    @app.exception_handler(exc_class_or_status_code=500)
+    async def internal_server_error(request: Request, the_error: HTTPException):
         return fastapijsonres(
             status_code=500,
             content={
@@ -933,10 +657,6 @@ if show_server_errors:
         )
 
 
-else:
-    pass
-
-
 app.include_router(router=apirouter)
 register_tortoise(
     app=app,
@@ -944,8 +664,4 @@ register_tortoise(
     modules={"models": [__name__]},
     generate_schemas=True,
 )
-uvicorn.run(
-    app=app,
-    host="0.0.0.0",
-    port=port,
-)
+uvicorn.run(app=app, host="0.0.0.0", port=port)
