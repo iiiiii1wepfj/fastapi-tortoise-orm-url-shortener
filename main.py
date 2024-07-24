@@ -144,17 +144,17 @@ async def check_if_valid_slug(slug: str):
         if i not in slug_allowed_characters:
             raise HTTPException(
                 status_code=400,
-                detail=f"invalid slug {theslug}: the slug must to be english letters or number or both",
+                detail=f"invalid slug {theslug}: the slug must contain only english letters and digits",
             )
     if len(theslug) < min_slug_len or len(theslug) > max_slug_len:
         raise HTTPException(
             status_code=400,
-            detail=f"invalid slug {theslug}: the slug length must to be {min_slug_len}-{max_slug_len}",
+            detail=f"invalid slug {theslug}: the slug length must be betwen {min_slug_len}-{max_slug_len} characters",
         )
     elif check_if_slug_exists:
         raise HTTPException(
             status_code=409,
-            detail="the slug is already exists",
+            detail="the slug already exists",
         )
     else:
         return True
@@ -188,7 +188,7 @@ async def get_link(slug: str, host):
     if not check_slug_exists:
         raise HTTPException(
             status_code=404,
-            detail="the slug is not exists",
+            detail="the slug does not exists",
         )
     else:
         check_link_db = await Links.get(slug=theslug)
@@ -209,7 +209,7 @@ async def get_link_qr(slug: str, host):
     if not check_slug_exists:
         raise HTTPException(
             status_code=404,
-            detail="the slug is not exists",
+            detail="the slug does not exists",
         )
     else:
         thelink = f"{host}/{theslug}"
@@ -228,7 +228,7 @@ async def redirect_link(slug: str, req):
     if not check_slug_exists:
         raise HTTPException(
             status_code=404,
-            detail="the slug is not exists",
+            detail="the slug does not exists",
         )
     else:
         check_link_db = await Links.get(slug=slug)
@@ -264,7 +264,7 @@ async def get_clicks_stats_by_the_slug(slug: str):
     if not check_slug_exists:
         raise HTTPException(
             status_code=404,
-            detail="the slug is not exists",
+            detail="the slug does not exists",
         )
     else:
         get_click_stats = await LinkStats.filter(slug=slug)
@@ -619,7 +619,7 @@ async def redirect_to_the_url(slug: str, request: Request):
 
 @app.api_route(path="/{slug}/qr", methods=["POST", "GET"])
 async def generate_qr_code(slug: str, request: Request):
-    """Get short link qr code."""
+    """Get the short link qr code."""
     thehost = request.url.hostname
     get_the_link_qr_code = await get_link_qr(
         slug=slug,
