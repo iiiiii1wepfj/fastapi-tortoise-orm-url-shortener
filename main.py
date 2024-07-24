@@ -24,7 +24,7 @@ try:
 except:
     database_url: str = "sqlite://linksdb.sqlite"
     port: int = 8000
-import uvicorn, jinja2, pydantic, re, sys, os, qrcode, httpx, pytz, yaml
+import uvicorn, jinja2, pydantic, re, sys, os, qrcode, httpx, pytz, yaml, validators, ipaddress
 
 app_version: str = "2.0"
 min_slug_len: int = 4
@@ -86,10 +86,7 @@ async def link_exists(slug: str):
 
 def check_if_slug_is_invalid_from_invalid_list(slug: str):
     the_slug = slug.lower()
-    if the_slug in invalid_slugs_list:
-        return False
-    else:
-        return True
+    return not the_slug in invalid_slugs_list
 
 
 def gen_url_slug():
@@ -142,20 +139,11 @@ async def check_if_valid_slug(slug: str):
     check_if_slug_exists = await link_exists(slug=theslug)
     for i in theslug:
         if i not in slug_allowed_characters:
-            raise HTTPException(
-                status_code=400,
-                detail=f"invalid slug {theslug}: the slug must contain only english letters and digits",
-            )
+            raise HTTPException(status_code=400, detail=f"invalid slug {theslug}: the slug must contain only english letters and digits")
     if len(theslug) < min_slug_len or len(theslug) > max_slug_len:
-        raise HTTPException(
-            status_code=400,
-            detail=f"invalid slug {theslug}: the slug length must be betwen {min_slug_len}-{max_slug_len} characters",
-        )
+        raise HTTPException(status_code=400, detail=f"invalid slug {theslug}: the slug length must be betwen {min_slug_len}-{max_slug_len} characters")
     elif check_if_slug_exists:
-        raise HTTPException(
-            status_code=409,
-            detail="the slug already exists",
-        )
+        raise HTTPException(status_code=409, detail="the slug already exists")
     else:
         return True
 
@@ -169,11 +157,8 @@ async def add_link(url: str, host, slug: Optional[str] = None):
         theslug = theslug.lower()
     await check_if_valid_slug(slug=theslug)
     theurl = url if re.match(r"^https?://", url) else "http://" + url
-    await Links.create(
-        slug=theslug,
-        url=theurl,
-        views=0,
-    )
+    is_valid_address(url)
+    await Links.create(slug=theslug, url=theurl, views=0)
     return {
         "slug": theslug,
         "url": theurl,
@@ -186,10 +171,7 @@ async def get_link(slug: str, host):
     theslug = slug.lower()
     check_slug_exists = await link_exists(slug=theslug)
     if not check_slug_exists:
-        raise HTTPException(
-            status_code=404,
-            detail="the slug does not exists",
-        )
+        raise HTTPException(status_code=404, detail="the slug does not exists")
     else:
         check_link_db = await Links.get(slug=theslug)
         return {
@@ -207,29 +189,20 @@ async def get_link_qr(slug: str, host):
     theslug = slug.lower()
     check_slug_exists = await link_exists(slug=theslug)
     if not check_slug_exists:
-        raise HTTPException(
-            status_code=404,
-            detail="the slug does not exists",
-        )
+        raise HTTPException(status_code=404, detail="the slug does not exists")
     else:
         thelink = f"{host}/{theslug}"
         make_qr_code = qrcode.make(thelink)
         bytes_qr_code = BytesIO()
         make_qr_code.save(bytes_qr_code)
         qr_code_result = BytesIO(bytes_qr_code.getvalue())
-        return StreamingResponse(
-            qr_code_result,
-            media_type="image/jpeg",
-        )
+        return StreamingResponse(qr_code_result, media_type="image/jpeg")
 
 
 async def redirect_link(slug: str, req):
     check_slug_exists = await link_exists(slug=slug)
     if not check_slug_exists:
-        raise HTTPException(
-            status_code=404,
-            detail="the slug does not exists",
-        )
+        raise HTTPException(status_code=404, detail="the slug does not exists")
     else:
         check_link_db = await Links.get(slug=slug)
         theviews = int(check_link_db.views) + 1
@@ -262,10 +235,7 @@ async def redirect_link(slug: str, req):
 async def get_clicks_stats_by_the_slug(slug: str):
     check_slug_exists = await link_exists(slug=slug)
     if not check_slug_exists:
-        raise HTTPException(
-            status_code=404,
-            detail="the slug does not exists",
-        )
+        raise HTTPException(status_code=404, detail="the slug does not exists")
     else:
         get_click_stats = await LinkStats.filter(slug=slug)
         browser_count = Counter(i.browser for i in get_click_stats)
@@ -284,6 +254,16 @@ async def get_clicks_stats_by_the_slug(slug: str):
 async def get_links_count():
     get_all_links_count = await Links.all().count()
     return get_all_links_count
+
+
+def is_valid_address(address):
+    if validators.url(address):
+        return True
+    try:
+        ipaddress.IPv4Address(address)
+        return True
+    except ipaddress.AddressValueError:
+        raise HTTPException(status_code=400, detail=f"invalid address")
 
 
 templates = Jinja2Templates(directory="templates")
@@ -333,20 +313,14 @@ async def homepage_post(request: Request, url: str = Form(...), slug: Optional[s
 async def the_docs_swagger_url_page_web_plugin_func_swagger():
     the_openapi_url = app.openapi_url
     the_docs_title = app.title + " docs"
-    return get_swagger_ui_html(
-        openapi_url=the_openapi_url,
-        title=the_docs_title,
-    )
+    return get_swagger_ui_html(openapi_url=the_openapi_url, title=the_docs_title)
 
 
 @app.get(path="/redoc", include_in_schema=False)
 async def the_docs_redoc_url_page_web_plugin_func_swagger():
     the_openapi_url = app.openapi_url
     the_docs_title = app.title + " docs"
-    return get_redoc_html(
-        openapi_url=the_openapi_url,
-        title=the_docs_title,
-    )
+    return get_redoc_html(openapi_url=the_openapi_url, title=the_docs_title)
 
 
 @app.get(path="/get", include_in_schema=False)
@@ -621,10 +595,7 @@ async def redirect_to_the_url(slug: str, request: Request):
 async def generate_qr_code(slug: str, request: Request):
     """Get the short link qr code."""
     thehost = request.url.hostname
-    get_the_link_qr_code = await get_link_qr(
-        slug=slug,
-        host=thehost,
-    )
+    get_the_link_qr_code = await get_link_qr(slug=slug, host=thehost)
     return get_the_link_qr_code
 
 
